@@ -15,4 +15,10 @@ public class User
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
     public DateTime? LastLoginAt { get; set; }
+
+    public string SubscriptionStatus { get; set; } = "none"; // none, active, expired
+    public string? SubscriptionPlanCode { get; set; }
+    public string? SubscriptionPlanName { get; set; }
+    public DateTime? SubscriptionStartedAt { get; set; }
+    public DateTime? SubscriptionExpiresAt { get; set; }
 }

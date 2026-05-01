@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TrueAltitude.Persistence.Data;
 
@@ -11,9 +12,11 @@ using TrueAltitude.Persistence.Data;
 namespace TrueAltitude.Persistence.Migrations
 {
     [DbContext(typeof(TrueAltitudeDbContext))]
-    partial class TrueAltitudeDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260501125553_AddLearningContentTables")]
+    partial class AddLearningContentTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -51,10 +54,15 @@ namespace TrueAltitude.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<int>("TopicId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
                         .IsUnique();
+
+                    b.HasIndex("TopicId", "SortOrder");
 
                     b.ToTable("LearningQuestions", (string)null);
                 });
@@ -195,28 +203,6 @@ namespace TrueAltitude.Persistence.Migrations
                     b.HasIndex("SubjectId", "ParentTopicId", "SortOrder");
 
                     b.ToTable("LearningTopics", (string)null);
-                });
-
-            modelBuilder.Entity("TrueAltitude.Domain.Entities.LearningTopicQuestion", b =>
-                {
-                    b.Property<int>("TopicId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("QuestionId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SortOrder")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
-
-                    b.HasKey("TopicId", "QuestionId");
-
-                    b.HasIndex("QuestionId");
-
-                    b.HasIndex("TopicId", "SortOrder");
-
-                    b.ToTable("LearningTopicQuestions", (string)null);
                 });
 
             modelBuilder.Entity("TrueAltitude.Domain.Entities.Setting", b =>
@@ -412,6 +398,17 @@ namespace TrueAltitude.Persistence.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("TrueAltitude.Domain.Entities.LearningQuestion", b =>
+                {
+                    b.HasOne("TrueAltitude.Domain.Entities.LearningTopic", "Topic")
+                        .WithMany("Questions")
+                        .HasForeignKey("TopicId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Topic");
+                });
+
             modelBuilder.Entity("TrueAltitude.Domain.Entities.LearningQuestionOption", b =>
                 {
                     b.HasOne("TrueAltitude.Domain.Entities.LearningQuestion", "Question")
@@ -441,25 +438,6 @@ namespace TrueAltitude.Persistence.Migrations
                     b.Navigation("Subject");
                 });
 
-            modelBuilder.Entity("TrueAltitude.Domain.Entities.LearningTopicQuestion", b =>
-                {
-                    b.HasOne("TrueAltitude.Domain.Entities.LearningQuestion", "Question")
-                        .WithMany("TopicQuestions")
-                        .HasForeignKey("QuestionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("TrueAltitude.Domain.Entities.LearningTopic", "Topic")
-                        .WithMany("TopicQuestions")
-                        .HasForeignKey("TopicId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Question");
-
-                    b.Navigation("Topic");
-                });
-
             modelBuilder.Entity("TrueAltitude.Domain.Entities.SubscriptionPurchase", b =>
                 {
                     b.HasOne("TrueAltitude.Domain.Entities.User", "User")
@@ -474,8 +452,6 @@ namespace TrueAltitude.Persistence.Migrations
             modelBuilder.Entity("TrueAltitude.Domain.Entities.LearningQuestion", b =>
                 {
                     b.Navigation("Options");
-
-                    b.Navigation("TopicQuestions");
                 });
 
             modelBuilder.Entity("TrueAltitude.Domain.Entities.LearningSubject", b =>
@@ -487,7 +463,7 @@ namespace TrueAltitude.Persistence.Migrations
                 {
                     b.Navigation("Children");
 
-                    b.Navigation("TopicQuestions");
+                    b.Navigation("Questions");
                 });
 #pragma warning restore 612, 618
         }

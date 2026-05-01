@@ -45,6 +45,10 @@
   background-color: transparent;
 }
 
+.topic-button.locked {
+  cursor: pointer;
+}
+
 .topic-button.selected {
   border-color: color-mix(in srgb, var(--accent-blue) 65%, white 35%);
   background-color: color-mix(in srgb, var(--accent-blue) 18%, transparent 82%);

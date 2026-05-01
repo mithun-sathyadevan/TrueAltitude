@@ -1,195 +1,290 @@
-import { Component, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 
-interface ExamOption {
-  id: string;
-  text: string;
-  isCorrect: boolean;
-  explanation: string;
-}
-
-interface ExamQuestion {
-  id: string;
-  text: string;
-  options: ExamOption[];
-}
+import {
+  ExamEvaluationResponse,
+  ExamQuestion,
+  ExamQuestionOption,
+  TopicNode,
+} from '../../models/learning.models';
+import { LearningDataService } from '../../services/learning-data.service';
 
 @Component({
   selector: 'app-realtime-exam-page',
   standalone: true,
+  imports: [CommonModule, FormsModule],
   templateUrl: './realtime-exam-page.component.html',
   styleUrl: './realtime-exam-page.component.scss',
 })
 export class RealtimeExamPageComponent implements OnDestroy {
-  protected readonly totalSeconds = 8 * 60;
+  protected readonly totalSeconds = 60 * 60; // 60 minutes
   protected timeLeftSeconds = this.totalSeconds;
+  protected showSubjectSelector = false; // New state for subject selection
   protected isExamStarted = false;
   protected isExamFinished = false;
   protected activeQuestionIndex = 0;
   protected selectedAnswers: Record<string, string> = {};
+  protected questions: ExamQuestion[] = [];
+  protected availableSubjects: TopicNode[] = [];
+  protected selectedSubjectCodes: Set<string> = new Set();
+  protected loadingSubjects = false;
+  protected loadingQuestions = false;
+  protected loadingEvaluation = false;
+  protected loadError = '';
+  protected score = 0;
+  protected scorePercent = 0;
+  protected answerChecks: Record<string, boolean> = {};
+  protected answerExplanations: Record<string, string> = {};
+  protected correctAnswerTexts: Record<string, string> = {};
 
   private timerHandle: ReturnType<typeof setInterval> | null = null;
 
-  protected readonly questions: ExamQuestion[] = [
-    {
-      id: 'exam-q1',
-      text: 'During a repetitive flight route, which item must be revalidated every dispatch cycle?',
-      options: [
-        {
-          id: 'exam-q1-a',
-          text: 'Weather minima, NOTAM constraints, and alternate suitability',
-          isCorrect: true,
-          explanation: 'Pass: these can change each cycle and directly impact dispatch safety.',
-        },
-        {
-          id: 'exam-q1-b',
-          text: 'Only the route nickname used by the operations team',
-          isCorrect: false,
-          explanation: 'Fail: route labels help internally but do not ensure flight legality.',
-        },
-        {
-          id: 'exam-q1-c',
-          text: 'Only the date format used in filing',
-          isCorrect: false,
-          explanation: 'Fail: formatting alone does not validate operational conditions.',
-        },
-      ],
-    },
-    {
-      id: 'exam-q2',
-      text: 'What is the safest action if the planned waypoint sequence conflicts with current ATC flow restrictions?',
-      options: [
-        {
-          id: 'exam-q2-a',
-          text: 'Proceed with the original route and explain later',
-          isCorrect: false,
-          explanation: 'Fail: route compliance must be handled before execution, not after.',
-        },
-        {
-          id: 'exam-q2-b',
-          text: 'Refile with an updated route and brief the crew on the change',
-          isCorrect: true,
-          explanation: 'Pass: compliant refiling and clear briefing preserve safety and legality.',
-        },
-        {
-          id: 'exam-q2-c',
-          text: 'Ignore restrictions if estimated delay is small',
-          isCorrect: false,
-          explanation: 'Fail: restrictions are mandatory regardless of perceived delay impact.',
-        },
-      ],
-    },
-    {
-      id: 'exam-q3',
-      text: 'Which metric best indicates readiness before submitting a repetitive plan?',
-      options: [
-        {
-          id: 'exam-q3-a',
-          text: 'All operational checks are green and route validation has no unresolved flags',
-          isCorrect: true,
-          explanation: 'Pass: clear validation status is the best pre-submission indicator.',
-        },
-        {
-          id: 'exam-q3-b',
-          text: 'The fastest possible submission time',
-          isCorrect: false,
-          explanation: 'Fail: speed without validation increases risk of rejection.',
-        },
-        {
-          id: 'exam-q3-c',
-          text: 'Only if previous day plan was accepted',
-          isCorrect: false,
-          explanation: 'Fail: each day has unique conditions and must be checked fresh.',
-        },
-      ],
-    },
-  ];
-
-  ngOnDestroy(): void {
-    this.clearTimer();
+  constructor(
+    private readonly learningDataService: LearningDataService,
+    private readonly cdr: ChangeDetectorRef,
+  ) {
+    console.log('[RealtimeExamPageComponent] Component initialized');
   }
 
-  protected startExam(): void {
-    this.isExamStarted = true;
-    this.isExamFinished = false;
-    this.activeQuestionIndex = 0;
-    this.selectedAnswers = {};
-    this.timeLeftSeconds = this.totalSeconds;
-    this.startTimer();
+  protected async openSubjectSelector(): Promise<void> {
+    console.log('[RealtimeExamPageComponent] Opening subject selector...');
+    this.loadingSubjects = true;
+    this.loadError = '';
+    
+    try {
+      const subjects = await this.learningDataService.getSubjects();
+      console.log('[RealtimeExamPageComponent] Subjects loaded:', subjects?.length);
+      this.availableSubjects = subjects || [];
+      this.showSubjectSelector = true;
+    } catch (err) {
+      console.error('[RealtimeExamPageComponent] Error loading subjects:', err);
+      this.loadError = 'Could not load subjects.';
+    } finally {
+      this.loadingSubjects = false;
+      this.cdr.detectChanges();
+    }
   }
 
-  protected restartExam(): void {
-    this.startExam();
+  protected closeSubjectSelector(): void {
+    console.log('[RealtimeExamPageComponent] Closing subject selector');
+    this.showSubjectSelector = false;
+    this.selectedSubjectCodes.clear();
+    this.cdr.detectChanges();
   }
 
-  protected submitExam(): void {
-    this.isExamFinished = true;
-    this.clearTimer();
+  protected toggleSubject(subjectId: string): void {
+    if (this.selectedSubjectCodes.has(subjectId)) {
+      this.selectedSubjectCodes.delete(subjectId);
+    } else {
+      this.selectedSubjectCodes.add(subjectId);
+    }
+  }
+
+  protected selectAllSubjects(): void {
+    this.selectedSubjectCodes = new Set(this.availableSubjects.map(s => s.id));
+  }
+
+  protected clearAllSubjects(): void {
+    this.selectedSubjectCodes.clear();
+  }
+
+  protected async startExam(): Promise<void> {
+    if (this.selectedSubjectCodes.size === 0) {
+      this.loadError = 'Please select at least one subject.';
+      return;
+    }
+
+    this.loadingQuestions = true;
+    this.loadError = '';
+
+    try {
+      const subjectCodes = Array.from(this.selectedSubjectCodes);
+      console.log('[RealtimeExamPageComponent] Fetching exam questions for subjects:', subjectCodes);
+      const questionsData = await this.learningDataService.getExamQuestions(subjectCodes);
+
+      console.log('[RealtimeExamPageComponent] Questions fetched:', questionsData?.length, questionsData);
+
+      if (!questionsData || questionsData.length === 0) {
+        this.loadError = 'No questions found for selected subjects.';
+        this.loadingQuestions = false;
+        this.cdr.detectChanges();
+        return;
+      }
+
+      this.questions = questionsData;
+
+      console.log('[RealtimeExamPageComponent] Questions loaded, count:', this.questions.length);
+
+      this.showSubjectSelector = false;
+      this.isExamStarted = true;
+      this.isExamFinished = false;
+      this.activeQuestionIndex = 0;
+      this.selectedAnswers = {};
+      this.score = 0;
+      this.scorePercent = 0;
+      this.answerChecks = {};
+      this.answerExplanations = {};
+      this.correctAnswerTexts = {};
+      this.timeLeftSeconds = this.totalSeconds;
+      this.startTimer();
+    } catch (err) {
+      console.error('Failed to load exam questions:', err);
+      this.loadError = 'Failed to load exam questions. Please try again.';
+    } finally {
+      this.loadingQuestions = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  protected selectAnswer(questionId: string, optionId: string): void {
+    this.selectedAnswers[questionId] = optionId;
+  }
+
+  protected getSelectedOption(question: ExamQuestion): ExamQuestionOption | undefined {
+    const selectedId = this.selectedAnswers[question.id];
+    return question.options?.find(o => o.id === selectedId);
+  }
+
+  protected isAnswerCorrect(questionId: string): boolean | undefined {
+    if (!(questionId in this.answerChecks)) {
+      return undefined;
+    }
+
+    return this.answerChecks[questionId];
+  }
+
+  protected getExplanation(questionId: string): string {
+    return this.answerExplanations[questionId] || '';
+  }
+
+  protected getCorrectAnswerText(questionId: string): string {
+    return this.correctAnswerTexts[questionId] || '';
   }
 
   protected goToQuestion(index: number): void {
     this.activeQuestionIndex = index;
   }
 
-  protected nextQuestion(): void {
-    if (this.activeQuestionIndex < this.questions.length - 1) {
-      this.activeQuestionIndex += 1;
-    }
-  }
-
   protected prevQuestion(): void {
     if (this.activeQuestionIndex > 0) {
-      this.activeQuestionIndex -= 1;
+      this.activeQuestionIndex--;
     }
   }
 
-  protected selectAnswer(questionId: string, optionId: string): void {
-    if (!this.isExamFinished) {
-      this.selectedAnswers = {
-        ...this.selectedAnswers,
-        [questionId]: optionId,
-      };
+  protected nextQuestion(): void {
+    if (this.activeQuestionIndex < this.questions.length - 1) {
+      this.activeQuestionIndex++;
     }
-  }
-
-  protected getSelectedOption(question: ExamQuestion): ExamOption | undefined {
-    return question.options.find((option) => option.id === this.selectedAnswers[question.id]);
   }
 
   protected answeredCount(): number {
     return Object.keys(this.selectedAnswers).length;
   }
 
+  protected isAnswered(questionId: string): boolean {
+    return !!this.selectedAnswers[questionId];
+  }
+
   protected scoreCount(): number {
-    return this.questions.filter((question) => this.getSelectedOption(question)?.isCorrect).length;
+    return this.score;
   }
 
   protected passPercent(): number {
-    return Math.round((this.scoreCount() / this.questions.length) * 100);
+    return this.scorePercent;
   }
 
   protected hasPassed(): boolean {
-    return this.passPercent() >= 70;
+    return this.passPercent() >= 50;
   }
 
   protected formattedTimeLeft(): string {
-    const minutes = Math.floor(this.timeLeftSeconds / 60)
-      .toString()
-      .padStart(2, '0');
-    const seconds = (this.timeLeftSeconds % 60).toString().padStart(2, '0');
-    return `${minutes}:${seconds}`;
+    const minutes = Math.floor(this.timeLeftSeconds / 60);
+    const seconds = this.timeLeftSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  protected async submitExam(): Promise<void> {
+    await this.evaluateAnswers(true);
+    this.finishExam();
+  }
+
+  protected restartExam(): void {
+    console.log('[RealtimeExamPageComponent] Restarting exam');
+    this.showSubjectSelector = false;
+    this.isExamStarted = false;
+    this.isExamFinished = false;
+    this.selectedAnswers = {};
+    this.questions = [];
+    this.score = 0;
+    this.scorePercent = 0;
+    this.answerChecks = {};
+    this.answerExplanations = {};
+    this.correctAnswerTexts = {};
+    this.selectedSubjectCodes.clear();
+    this.openSubjectSelector();
   }
 
   private startTimer(): void {
-    this.clearTimer();
-
     this.timerHandle = setInterval(() => {
-      this.timeLeftSeconds -= 1;
+      this.timeLeftSeconds--;
 
       if (this.timeLeftSeconds <= 0) {
-        this.timeLeftSeconds = 0;
-        this.submitExam();
+        void this.submitExam();
       }
+
+      this.cdr.detectChanges();
     }, 1000);
+  }
+
+  private finishExam(): void {
+    this.clearTimer();
+    this.isExamStarted = false;
+    this.isExamFinished = true;
+    this.cdr.detectChanges();
+  }
+
+  private async evaluateAnswers(includeExplanations: boolean): Promise<void> {
+    if (Object.keys(this.selectedAnswers).length === 0) {
+      this.score = 0;
+      this.scorePercent = 0;
+      return;
+    }
+
+    this.loadingEvaluation = true;
+
+    try {
+      const evaluation = await this.learningDataService.evaluateExamAnswers(
+        this.questions.map((question) => question.id),
+        this.selectedAnswers,
+        this.questions.length,
+        includeExplanations,
+      );
+
+      if (!evaluation) {
+        return;
+      }
+
+      this.applyEvaluation(evaluation, includeExplanations);
+    } finally {
+      this.loadingEvaluation = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  private applyEvaluation(evaluation: ExamEvaluationResponse, includeExplanations: boolean): void {
+    this.score = evaluation.score;
+    this.scorePercent = evaluation.percent;
+
+    this.answerChecks = {};
+    this.correctAnswerTexts = {};
+    for (const item of evaluation.results) {
+      this.answerChecks[item.questionId] = item.isCorrect;
+      this.correctAnswerTexts[item.questionId] = item.correctOptionText || '';
+      if (includeExplanations) {
+        this.answerExplanations[item.questionId] = item.explanation || '';
+      }
+    }
   }
 
   private clearTimer(): void {
@@ -197,5 +292,9 @@ export class RealtimeExamPageComponent implements OnDestroy {
       clearInterval(this.timerHandle);
       this.timerHandle = null;
     }
+  }
+
+  ngOnDestroy(): void {
+    this.clearTimer();
   }
 }

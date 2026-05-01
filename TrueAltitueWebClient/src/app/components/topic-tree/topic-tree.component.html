@@ -5,14 +5,14 @@
         type="button"
         class="topic-button"
         [class.selected]="topic.id === selectedTopicId"
-        [class.locked]="!!topic.requiresSubscription"
+        [class.locked]="!!topic.requiresSubscription && !hasPremiumAccess"
         [style.padding-left.px]="12 + depth * 18"
-        [disabled]="!!topic.requiresSubscription"
+        [disabled]="false"
         (click)="onTopicSelected(topic)"
       >
         <span class="topic-title-row">
           <span class="topic-title">{{ topic.title }}</span>
-          @if (topic.requiresSubscription) {
+          @if (topic.requiresSubscription && !hasPremiumAccess) {
             <span class="topic-badge">{{ topic.subscriptionLabel || 'Premium Access' }}</span>
           }
         </span>
@@ -20,7 +20,7 @@
           @if (topic.children?.length) {
             <span class="child-count">{{ topic.children?.length }}</span>
           }
-          @if (topic.requiresSubscription) {
+          @if (topic.requiresSubscription && !hasPremiumAccess) {
             <i class="fas fa-lock lock-icon" aria-hidden="true"></i>
           }
         </span>
@@ -31,6 +31,7 @@
           [topics]="topic.children || []"
           [depth]="depth + 1"
           [selectedTopicId]="selectedTopicId"
+          [hasPremiumAccess]="hasPremiumAccess"
           (topicSelected)="onTopicSelected($event)"
         ></app-topic-tree>
       }

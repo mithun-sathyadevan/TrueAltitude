@@ -1,0 +1,69 @@
+<div class="subscription-page">
+  <app-top-header greeting="Premium Subscription" name="Mithun" avatarUrl="/images/cadet-avatar.svg"></app-top-header>
+
+  <section class="intro surface-card">
+    <div>
+      <span class="intro-kicker">Membership Plans</span>
+      <h2 class="intro-title">Choose Your Plan</h2>
+      <p class="muted">
+        Upgrade your cockpit with premium modules and real-time mock exams.
+      </p>
+    </div>
+    <a routerLink="/" class="back-link">Back to Dashboard</a>
+  </section>
+
+  <section class="surface-card status-strip">
+    <div>
+      <span class="label">Current Plan</span>
+      <strong>{{ activePlanLabel() }}</strong>
+    </div>
+    <div>
+      <span class="label">Status</span>
+      <strong>{{ hasActiveSubscription() ? 'Active' : 'Inactive' }}</strong>
+    </div>
+    <div>
+      <span class="label">Valid Until</span>
+      <strong>{{ activeUntilLabel() }}</strong>
+    </div>
+  </section>
+
+  @if (message()) {
+    <div class="banner success">{{ message() }}</div>
+  }
+
+  @if (error()) {
+    <div class="banner error">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <section class="surface-card loading-state">Loading subscription plans...</section>
+  } @else {
+    <section class="plans-grid">
+      @for (plan of plans(); track plan.code) {
+        <article class="surface-card plan-card" [class.popular]="plan.isPopular">
+          @if (plan.isPopular) {
+            <span class="badge">Recommended</span>
+          }
+
+          <h3>{{ plan.name }}</h3>
+          <p class="muted description">{{ plan.description || 'Premium TrueAltitude access' }}</p>
+
+          <div class="price-row">
+            <span class="currency">INR</span>
+            <span class="price">{{ priceInInr(plan.priceInPaise) | number: '1.0-0' }}</span>
+          </div>
+
+          <p class="duration">{{ plan.durationDays }} days access</p>
+
+          <button
+            type="button"
+            class="buy-btn"
+            [disabled]="busyPlanCode() === plan.code"
+            (click)="onBuyPlan(plan)">
+            {{ busyPlanCode() === plan.code ? 'Processing...' : 'Buy Plan' }}
+          </button>
+        </article>
+      }
+    </section>
+  }
+</div>

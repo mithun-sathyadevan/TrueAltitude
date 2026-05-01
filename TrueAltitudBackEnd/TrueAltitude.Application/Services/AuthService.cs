@@ -1,8 +1,4 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
 using TrueAltitude.Application.DTOs;
 using TrueAltitude.Domain.Entities;
 using TrueAltitude.Infrastructure.Interfaces;
@@ -23,27 +19,21 @@ public class AuthService : IAuthService
     private readonly IUserRepository _userRepository;
     private readonly IGoogleOAuthService _googleOAuthService;
     private readonly IEmailService _emailService;
+    private readonly IJwtTokenService _jwtTokenService;
     private readonly ILogger<AuthService> _logger;
-    private readonly string _jwtSecret;
-    private readonly string _jwtIssuer;
-    private readonly string _jwtAudience;
 
     public AuthService(
         IUserRepository userRepository,
         IGoogleOAuthService googleOAuthService,
         IEmailService emailService,
-        ILogger<AuthService> logger,
-        string jwtSecret,
-        string jwtIssuer,
-        string jwtAudience)
+        IJwtTokenService jwtTokenService,
+        ILogger<AuthService> logger)
     {
         _userRepository = userRepository;
         _googleOAuthService = googleOAuthService;
         _emailService = emailService;
+        _jwtTokenService = jwtTokenService;
         _logger = logger;
-        _jwtSecret = jwtSecret;
-        _jwtIssuer = jwtIssuer;
-        _jwtAudience = jwtAudience;
     }
 
     public async Task<AuthResponseDto> RegisterAsync(RegisterUserDto dto)
@@ -140,7 +130,7 @@ public class AuthService : IAuthService
         user.LastLoginAt = DateTime.UtcNow;
         await _userRepository.UpdateAsync(user);
 
-        var token = GenerateJwtToken(user);
+        var token = _jwtTokenService.GenerateToken(user);
 
         return new AuthResponseDto
         {
@@ -211,7 +201,7 @@ public class AuthService : IAuthService
         {
             Success = true,
             Message = "Login successful.",
-            Token = GenerateJwtToken(user),
+            Token = _jwtTokenService.GenerateToken(user),
             User = MapUserToDto(user)
         };
     }
@@ -255,7 +245,7 @@ public class AuthService : IAuthService
         {
             Success = true,
             Message = "Google login successful.",
-            Token = GenerateJwtToken(user),
+            Token = _jwtTokenService.GenerateToken(user),
             User = MapUserToDto(user)
         };
     }
@@ -280,29 +270,6 @@ public class AuthService : IAuthService
         return Random.Shared.Next(100000, 999999).ToString();
     }
 
-    private string GenerateJwtToken(User user)
-    {
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_jwtSecret);
-
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Name, user.Name),
-                new Claim("AvatarUrl", user.AvatarUrl ?? string.Empty)
-            }),
-            Expires = DateTime.UtcNow.AddHours(24),
-            Issuer = _jwtIssuer,
-            Audience = _jwtAudience,
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-        };
-
-        return tokenHandler.WriteToken(tokenHandler.CreateToken(tokenDescriptor));
-    }
-
     private static UserResponseDto MapUserToDto(User user)
     {
         return new UserResponseDto
@@ -313,6 +280,11 @@ public class AuthService : IAuthService
             AvatarUrl = user.AvatarUrl,
             Provider = user.Provider,
             IsEmailVerified = user.IsEmailVerified,
+            SubscriptionStatus = user.SubscriptionStatus,
+            SubscriptionPlanCode = user.SubscriptionPlanCode,
+            SubscriptionPlanName = user.SubscriptionPlanName,
+            SubscriptionStartedAt = user.SubscriptionStartedAt,
+            SubscriptionExpiresAt = user.SubscriptionExpiresAt,
             CreatedAt = user.CreatedAt,
             LastLoginAt = user.LastLoginAt
         };

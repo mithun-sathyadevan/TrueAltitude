@@ -29,19 +29,23 @@ builder.Services.AddDbContext<TrueAltitudeDbContext>(options =>
 // ===== Dependency Injection =====
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ISettingsRepository, SettingsRepository>();
+builder.Services.AddScoped<ISubscriptionPurchaseRepository, SubscriptionPurchaseRepository>();
+builder.Services.AddScoped<ILearningRepository, LearningRepository>();
 builder.Services.AddScoped<IGoogleOAuthService, GoogleOAuthService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IJwtTokenService>(_ => new JwtTokenService(jwtSecret, jwtIssuer, jwtAudience));
 builder.Services.AddScoped<IAuthService>(provider =>
     new AuthService(
         provider.GetRequiredService<IUserRepository>(),
         provider.GetRequiredService<IGoogleOAuthService>(),
         provider.GetRequiredService<IEmailService>(),
-        provider.GetRequiredService<ILogger<AuthService>>(),
-        jwtSecret,
-        jwtIssuer,
-        jwtAudience
+        provider.GetRequiredService<IJwtTokenService>(),
+        provider.GetRequiredService<ILogger<AuthService>>()
     )
 );
+builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
+builder.Services.AddScoped<ILearningService, LearningService>();
 
 // ===== Authentication (JWT) =====
 var key = Encoding.ASCII.GetBytes(jwtSecret);

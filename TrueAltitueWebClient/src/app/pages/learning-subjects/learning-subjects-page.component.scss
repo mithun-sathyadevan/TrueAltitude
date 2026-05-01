@@ -74,13 +74,13 @@
 
 .subject-row.locked {
   opacity: 0.8;
-  cursor: not-allowed;
+  cursor: pointer;
   border-style: dashed;
 }
 
 .subject-row.locked:hover {
-  border-color: var(--border-color);
-  background: color-mix(in srgb, var(--card-bg) 80%, #0b1120 20%);
+  border-color: color-mix(in srgb, #facc15 40%, var(--border-color) 60%);
+  background: color-mix(in srgb, #facc15 8%, transparent 92%);
 }
 
 .subscription-badge {

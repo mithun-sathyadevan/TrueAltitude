@@ -38,6 +38,11 @@ public class UserResponseDto
     public string? AvatarUrl { get; set; }
     public string Provider { get; set; } = string.Empty;
     public bool IsEmailVerified { get; set; }
+    public string SubscriptionStatus { get; set; } = "none";
+    public string? SubscriptionPlanCode { get; set; }
+    public string? SubscriptionPlanName { get; set; }
+    public DateTime? SubscriptionStartedAt { get; set; }
+    public DateTime? SubscriptionExpiresAt { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? LastLoginAt { get; set; }
 }

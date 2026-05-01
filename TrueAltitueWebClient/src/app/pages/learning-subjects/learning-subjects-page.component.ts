@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { TopicNode } from '../../models/learning.models';
 import { LearningDataService } from '../../services/learning-data.service';
+import { SubscriptionAccessService } from '../../services/subscription-access.service';
 
 @Component({
   selector: 'app-learning-subjects-page',
@@ -13,12 +14,58 @@ import { LearningDataService } from '../../services/learning-data.service';
   templateUrl: './learning-subjects-page.component.html',
   styleUrl: './learning-subjects-page.component.scss',
 })
-export class LearningSubjectsPageComponent {
+export class LearningSubjectsPageComponent implements OnInit {
   protected subjectQuery = '';
-  protected readonly subjects: TopicNode[];
+  protected subjects: TopicNode[] = [];
+  protected loading = true;
+  protected loadError = '';
 
-  constructor(private readonly learningDataService: LearningDataService) {
-    this.subjects = this.learningDataService.getSubjects();
+  constructor(
+    private readonly learningDataService: LearningDataService,
+    private readonly subscriptionAccessService: SubscriptionAccessService,
+    private readonly router: Router,
+    private readonly cdr: ChangeDetectorRef,
+  ) {}
+
+  async ngOnInit(): Promise<void> {
+    this.loading = true;
+    this.loadError = '';
+
+    try {
+      const subjects = await this.learningDataService.getSubjects();
+      if (!subjects.length) {
+        this.loadError = 'Could not load subjects from database.';
+      }
+
+      this.subjects = subjects;
+      this.loading = false;
+      this.cdr.detectChanges();
+    } catch (err) {
+      console.error('[LearningSubjectsPageComponent] ngOnInit failed:', err);
+      this.loadError = 'Could not load subjects from database.';
+    } finally {
+      this.loading = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  protected hasPremiumAccess(): boolean {
+    return this.subscriptionAccessService.hasActiveSubscription();
+  }
+
+  protected onPremiumSubjectClick(subject: TopicNode): void {
+    const targetUrl = `/learning/topics/${subject.id}`;
+
+    if (this.hasPremiumAccess()) {
+      void this.router.navigate(['/learning/topics', subject.id]);
+      return;
+    }
+
+    this.subscriptionAccessService.redirectToSubscription(this.router, targetUrl);
+  }
+
+  protected trackSubject(index: number, subject: TopicNode): string {
+    return subject.id || subject.title || `${index}`;
   }
 
   protected get filteredSubjects(): TopicNode[] {
@@ -29,7 +76,7 @@ export class LearningSubjectsPageComponent {
 
     return this.subjects.filter(
       (subject) =>
-        subject.title.toLowerCase().includes(query) || subject.description.toLowerCase().includes(query),
+        (subject.title || '').toLowerCase().includes(query) || (subject.description || '').toLowerCase().includes(query),
     );
   }
 }

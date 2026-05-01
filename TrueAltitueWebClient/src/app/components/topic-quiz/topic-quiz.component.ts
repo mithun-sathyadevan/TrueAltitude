@@ -1,6 +1,8 @@
 import { Component, Input } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { TopicNode, TopicQuestion, TopicQuestionOption } from '../../models/learning.models';
+import { SubscriptionAccessService } from '../../services/subscription-access.service';
 
 @Component({
   selector: 'app-topic-quiz',
@@ -12,6 +14,11 @@ export class TopicQuizComponent {
   @Input() topic: TopicNode | null = null;
 
   protected selectedAnswers: Record<string, string> = {};
+
+  constructor(
+    private readonly subscriptionAccessService: SubscriptionAccessService,
+    private readonly router: Router,
+  ) {}
 
   protected onSelectOption(questionId: string, optionId: string): void {
     this.selectedAnswers = {
@@ -30,7 +37,15 @@ export class TopicQuizComponent {
   }
 
   protected isQuestionLocked(question: TopicQuestion): boolean {
-    return !!question.requiresSubscription;
+    return !!question.requiresSubscription && !this.subscriptionAccessService.hasActiveSubscription();
+  }
+
+  protected isTopicLocked(): boolean {
+    return !!this.topic?.requiresSubscription && !this.subscriptionAccessService.hasActiveSubscription();
+  }
+
+  protected goToSubscription(): void {
+    this.subscriptionAccessService.redirectToSubscription(this.router, this.router.url);
   }
 
   protected hasQuestions(): boolean {

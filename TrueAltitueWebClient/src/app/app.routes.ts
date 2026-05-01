@@ -8,6 +8,7 @@ import { LearningSubjectsPageComponent } from './pages/learning-subjects/learnin
 import { LoginPageComponent } from './pages/login/login-page.component';
 import { RegisterPageComponent } from './pages/register/register-page.component';
 import { RealtimeExamPageComponent } from './pages/realtime-exam/realtime-exam-page.component';
+import { SubscriptionPageComponent } from './pages/subscription/subscription-page.component';
 import { VerifyEmailPageComponent } from './pages/verify-email/verify-email-page.component';
 
 export const routes: Routes = [
@@ -15,6 +16,8 @@ export const routes: Routes = [
 	{ path: 'login', component: LoginPageComponent },
 	{ path: 'register', component: RegisterPageComponent },
 	{ path: 'verify-email', component: VerifyEmailPageComponent },
+	{ path: 'subscription', redirectTo: 'subscriptions', pathMatch: 'full' },
+	{ path: 'subscriptions', component: SubscriptionPageComponent, canActivate: [authGuard] },
 	{
 		path: 'learning',
 		component: LearningShellPageComponent,

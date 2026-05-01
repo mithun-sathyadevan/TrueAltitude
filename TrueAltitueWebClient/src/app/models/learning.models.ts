@@ -39,3 +39,30 @@ export interface TopicNode {
   videos?: TopicVideo[];
   blogs?: TopicBlog[];
 }
+
+export interface ExamQuestionOption {
+  id: string;
+  text: string;
+}
+
+export interface ExamQuestion {
+  id: string;
+  text: string;
+  options: ExamQuestionOption[];
+}
+
+export interface ExamEvaluationItem {
+  questionId: string;
+  isCorrect: boolean;
+  isAnswered: boolean;
+  correctOptionId: string;
+  correctOptionText: string;
+  explanation: string;
+}
+
+export interface ExamEvaluationResponse {
+  score: number;
+  totalQuestions: number;
+  percent: number;
+  results: ExamEvaluationItem[];
+}

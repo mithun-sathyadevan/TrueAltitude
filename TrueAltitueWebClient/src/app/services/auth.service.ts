@@ -8,6 +8,11 @@ export interface AuthUser {
   email?: string;
   avatarUrl?: string;
   provider?: 'local' | 'google';
+  subscriptionStatus?: 'none' | 'active' | 'expired';
+  subscriptionPlanCode?: string;
+  subscriptionPlanName?: string;
+  subscriptionStartedAt?: string;
+  subscriptionExpiresAt?: string;
   createdAt?: string;
 }
 
@@ -159,6 +164,10 @@ export class AuthService {
 
   getAuthToken(): string | null {
     return localStorage.getItem(this.tokenStorageKey);
+  }
+
+  updateSession(user: AuthUser, token?: string): void {
+    this.persistAuth(user, token);
   }
 
   logout(): void {

@@ -1,25 +1,89 @@
 <div class="exam-page">
   <section class="surface-card exam-header">
     <h2 class="section-title">Real-Time Exam Quiz</h2>
-    <p class="muted">Timed simulation with instant fail/pass feedback and answer explanations.</p>
+    <p class="muted">Select subjects, answer 10 randomly selected questions, and review your score after submit. 60-minute timer with auto-submit.</p>
 
-    @if (!isExamStarted) {
-      <button type="button" class="primary-btn" (click)="startExam()">Start Exam</button>
-    } @else {
+    <!-- Initial State: Show "Start Quiz" button -->
+    @if (!showSubjectSelector && !isExamStarted && !isExamFinished) {
+      <div class="start-container">
+        <button type="button" class="primary-btn large" (click)="openSubjectSelector()">
+          Start Quiz
+        </button>
+      </div>
+    }
+
+    <!-- Subject Selection State -->
+    @if (showSubjectSelector && !isExamStarted && !isExamFinished) {
+      <div class="subject-selector">
+        <h3>Select Subjects for Exam</h3>
+
+        @if (loadingSubjects) {
+          <p class="muted">Loading subjects...</p>
+        } @else if (loadError) {
+          <p class="muted error-text">{{ loadError }}</p>
+        } @else {
+          <div class="subject-list">
+            @for (subject of availableSubjects; track subject.id) {
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  [checked]="selectedSubjectCodes.has(subject.id)"
+                  (change)="toggleSubject(subject.id)"
+                />
+                <span>{{ subject.title }}</span>
+                <em class="muted">{{ subject.description }}</em>
+              </label>
+            }
+          </div>
+
+          <div class="selector-actions">
+            <button type="button" class="ghost-btn" (click)="selectAllSubjects()">Select All</button>
+            <button type="button" class="ghost-btn" (click)="clearAllSubjects()">Clear All</button>
+          </div>
+
+          <div class="selected-info">
+            <p class="muted">Selected: {{ selectedSubjectCodes.size }} / {{ availableSubjects.length }} subjects</p>
+          </div>
+
+          <div class="selector-footer">
+            <button type="button" class="ghost-btn" (click)="closeSubjectSelector()">
+              Back
+            </button>
+            <button
+              type="button"
+              class="primary-btn"
+              (click)="startExam()"
+              [disabled]="loadingQuestions || selectedSubjectCodes.size === 0"
+            >
+              @if (loadingQuestions) {
+                <span>Loading Questions...</span>
+              } @else {
+                <span>Start Exam</span>
+              }
+            </button>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Exam Running State -->
+    @if (isExamStarted && !isExamFinished) {
       <div class="status-row">
         <div class="pill">Time Left: {{ formattedTimeLeft() }}</div>
         <div class="pill">Answered: {{ answeredCount() }}/{{ questions.length }}</div>
-
-        @if (!isExamFinished) {
-          <button type="button" class="primary-btn" (click)="submitExam()">Submit Exam</button>
-        } @else {
-          <button type="button" class="primary-btn" (click)="restartExam()">Retry</button>
-        }
+        <button type="button" class="primary-btn" (click)="submitExam()" [disabled]="loadingEvaluation">Submit Exam</button>
+      </div>
+    } 
+    
+    <!-- Results State -->
+    @else if (isExamFinished) {
+      <div class="status-row">
+        <button type="button" class="primary-btn" (click)="restartExam()">Start New Exam</button>
       </div>
     }
   </section>
 
-  @if (isExamStarted) {
+  @if (isExamStarted && !isExamFinished) {
     <div class="exam-layout">
       <aside class="surface-card question-nav">
         <h3>Question Navigator</h3>
@@ -56,13 +120,6 @@
             }
           </div>
 
-          @if (getSelectedOption(currentQuestion); as selected) {
-            <div class="result" [class.pass]="selected.isCorrect" [class.fail]="!selected.isCorrect">
-              <strong>{{ selected.isCorrect ? 'Pass' : 'Fail' }}</strong>
-              <p>{{ selected.explanation }}</p>
-            </div>
-          }
-
           <div class="question-footer">
             <button type="button" class="ghost-btn" (click)="prevQuestion()" [disabled]="activeQuestionIndex === 0">
               Previous
@@ -90,6 +147,32 @@
       <p [class.pass-text]="hasPassed()" [class.fail-text]="!hasPassed()">
         {{ hasPassed() ? 'Result: PASS' : 'Result: FAIL' }}
       </p>
+      <p class="muted">Test duration: 60 minutes | Questions: {{ questions.length }} | Your answers: {{ answeredCount() }}</p>
+
+      <div class="summary-explanations">
+        <h4>Answer Review</h4>
+        @for (question of questions; track question.id) {
+          <div class="summary-item">
+            <strong>{{ question.text }}</strong>
+
+            @if (!isAnswered(question.id)) {
+              <p class="muted">Unanswered</p>
+            } @else {
+              <p [class.pass-text]="isAnswerCorrect(question.id)" [class.fail-text]="!isAnswerCorrect(question.id)">
+                {{ isAnswerCorrect(question.id) ? 'Correct answer selected.' : 'Incorrect answer selected.' }}
+              </p>
+            }
+
+            @if (getCorrectAnswerText(question.id)) {
+              <p><strong>Correct answer:</strong> {{ getCorrectAnswerText(question.id) }}</p>
+            }
+
+            @if (getExplanation(question.id)) {
+              <p class="muted">{{ getExplanation(question.id) }}</p>
+            }
+          </div>
+        }
+      </div>
     </section>
   }
 </div>

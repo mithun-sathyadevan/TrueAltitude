@@ -4,6 +4,14 @@
   <main class="main-content">
     <app-top-header></app-top-header>
 
+    <div style="display:flex; justify-content:flex-end; margin: 12px 0 18px;">
+      <a
+        routerLink="/subscriptions"
+        style="text-decoration:none; color:#0f172a; background:#f8fafc; border:1px solid #cbd5e1; padding:8px 12px; border-radius:10px; font-weight:600;">
+        Manage Subscription
+      </a>
+    </div>
+
     <section class="stats-grid">
       <app-stat-card title="Course Progress" [progressPercent]="75" progressLabel="75% Completed"></app-stat-card>
       <app-stat-card title="Flight Hours" value="120 / 200"></app-stat-card>

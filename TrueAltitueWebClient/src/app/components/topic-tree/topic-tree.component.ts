@@ -14,13 +14,10 @@ export class TopicTreeComponent {
   @Input({ required: true }) topics: TopicNode[] = [];
   @Input() depth = 0;
   @Input() selectedTopicId: string | null = null;
+  @Input() hasPremiumAccess = false;
   @Output() topicSelected = new EventEmitter<TopicNode>();
 
   protected onTopicSelected(topic: TopicNode): void {
-    if (topic.requiresSubscription) {
-      return;
-    }
-
     this.topicSelected.emit(topic);
   }
 }
