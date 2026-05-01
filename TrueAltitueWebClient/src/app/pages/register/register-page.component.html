@@ -1,0 +1,43 @@
+<div class="register-page">
+  <div class="register-card surface-card">
+    <h1>Join {{ appTitle }}</h1>
+    <p class="muted subtitle">Create your account to start learning.</p>
+
+    <form class="register-form" (submit)="onRegister($event)">
+      <label for="name">Full Name</label>
+      <input id="name" type="text" placeholder="John Doe" [(ngModel)]="name" name="name" />
+
+      <label for="email">Email</label>
+      <input id="email" type="email" placeholder="john@example.com" [(ngModel)]="email" name="email" />
+
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="At least 6 characters" [(ngModel)]="password" name="password" />
+
+      <label for="confirmPassword">Confirm Password</label>
+      <input
+        id="confirmPassword"
+        type="password"
+        placeholder="Re-enter your password"
+        [(ngModel)]="confirmPassword"
+        name="confirmPassword"
+      />
+
+      @if (errorMessage) {
+        <p class="error-message">{{ errorMessage }}</p>
+      }
+
+      @if (successMessage) {
+        <p class="success-message">{{ successMessage }}</p>
+      }
+
+      <button type="submit" class="primary-btn">Register</button>
+    </form>
+
+    <div class="actions-row">
+      <p class="muted">
+        Already have an account?
+        <a routerLink="/login" class="link">Sign in here</a>
+      </p>
+    </div>
+  </div>
+</div>

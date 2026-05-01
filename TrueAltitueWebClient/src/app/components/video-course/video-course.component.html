@@ -1,0 +1,20 @@
+<section class="surface-card">
+  <h2 class="section-title">Video Course</h2>
+  <p class="muted intro">{{ topic?.title || 'Select a topic' }}</p>
+
+  @if (topic?.videos?.length) {
+    <div class="resource-list">
+      @for (video of topic?.videos || []; track video.id) {
+        <article class="resource-card">
+          <div class="resource-head">
+            <h3>{{ video.title }}</h3>
+            <span class="duration">{{ video.duration }}</span>
+          </div>
+          <p class="muted">{{ video.summary }}</p>
+        </article>
+      }
+    </div>
+  } @else {
+    <p class="muted">No video chapters added for this topic yet.</p>
+  }
+</section>

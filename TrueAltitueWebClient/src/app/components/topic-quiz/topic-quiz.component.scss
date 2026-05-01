@@ -1,0 +1,103 @@
+.intro {
+  margin-bottom: 16px;
+}
+
+.premium-lock-panel {
+  border: 1px solid color-mix(in srgb, #facc15 38%, transparent 62%);
+  background: color-mix(in srgb, #facc15 10%, transparent 90%);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.premium-lock-panel p {
+  margin-top: 6px;
+  margin-bottom: 0;
+}
+
+.question-list {
+  display: grid;
+  gap: 16px;
+}
+
+.question-block {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.question-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.question-block h3 {
+  margin-bottom: 12px;
+  font-size: 1rem;
+}
+
+.premium-badge {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #facc15;
+  background: color-mix(in srgb, #facc15 12%, transparent 88%);
+  border: 1px solid color-mix(in srgb, #facc15 38%, transparent 62%);
+}
+
+.question-lock-panel {
+  margin-top: 4px;
+}
+
+.options-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.option-btn {
+  border: 1px solid color-mix(in srgb, var(--border-color) 90%, white 10%);
+  background: color-mix(in srgb, var(--card-bg) 80%, #0b1120 20%);
+  color: var(--text-main);
+  border-radius: 10px;
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.15s ease;
+}
+
+.option-btn:hover {
+  transform: translateY(-1px);
+}
+
+.option-btn.selected {
+  border-color: var(--accent-blue);
+}
+
+.result {
+  margin-top: 12px;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.result.pass {
+  background: color-mix(in srgb, #22c55e 22%, transparent 78%);
+  border: 1px solid color-mix(in srgb, #22c55e 45%, transparent 55%);
+}
+
+.result.fail {
+  background: color-mix(in srgb, #ef4444 18%, transparent 82%);
+  border: 1px solid color-mix(in srgb, #ef4444 40%, transparent 60%);
+}
+
+.result p {
+  margin-top: 6px;
+  margin-bottom: 0;
+  color: var(--text-main);
+}
+
+.empty-state {
+  margin-bottom: 0;
+}

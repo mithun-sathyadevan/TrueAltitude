@@ -1,0 +1,39 @@
+<section class="surface-card subject-panel">
+  <div class="subject-header-row">
+    <h2 class="section-title">Select Subject</h2>
+    <span class="muted subject-count">{{ filteredSubjects.length }} / {{ subjects.length }}</span>
+  </div>
+
+  <label class="subject-search-wrap">
+    <i class="fas fa-search" aria-hidden="true"></i>
+    <input
+      type="text"
+      class="subject-search"
+      placeholder="Search subject (Navigation, Radio Navigation...)"
+      [(ngModel)]="subjectQuery"
+    />
+  </label>
+
+  <div class="subject-list" role="listbox" aria-label="Subject list">
+    @for (subject of filteredSubjects; track subject.id) {
+      @if (subject.requiresSubscription) {
+        <article class="subject-row locked" aria-disabled="true">
+          <div class="subject-top-row">
+            <strong>{{ subject.title }}</strong>
+            <span class="subscription-badge">{{ subject.subscriptionLabel || 'Premium Access' }}</span>
+          </div>
+          <span>{{ subject.description }}</span>
+        </article>
+      } @else {
+        <a class="subject-row" [routerLink]="['/learning/topics', subject.id]">
+          <strong>{{ subject.title }}</strong>
+          <span>{{ subject.description }}</span>
+        </a>
+      }
+    }
+
+    @if (filteredSubjects.length === 0) {
+      <p class="muted empty-subjects">No subjects match your search.</p>
+    }
+  </div>
+</section>

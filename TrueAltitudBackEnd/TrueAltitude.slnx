@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="TrueAltitude.API/TrueAltitude.API.csproj" />
+  <Project Path="TrueAltitude.Application/TrueAltitude.Application.csproj" />
+  <Project Path="TrueAltitude.Infrastructure/TrueAltitude.Infrastructure.csproj" />
+  <Project Path="TrueAltitude.Persistence/TrueAltitude.Persistence.csproj" />
+</Solution>

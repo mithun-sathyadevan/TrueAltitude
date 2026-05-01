@@ -1,0 +1,10 @@
+<section class="surface-card">
+  <h2 class="section-title">Upcoming Exams</h2>
+
+  @for (exam of exams; track exam.title) {
+    <div class="event">
+      <strong>{{ exam.date }}:</strong>
+      <span>{{ exam.title }}</span>
+    </div>
+  }
+</section>

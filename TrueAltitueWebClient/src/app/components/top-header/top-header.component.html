@@ -1,0 +1,15 @@
+<header>
+  <h1>{{ greeting }}</h1>
+
+  <div class="header-actions">
+    @if (isLoggedIn()) {
+      <div class="user-profile">
+        <img [src]="getDisplayAvatar()" [alt]="getDisplayName() + ' avatar'" />
+        <span>{{ getDisplayName() }}</span>
+      </div>
+      <button type="button" class="logout-btn" (click)="onLogout()">Logout</button>
+    } @else {
+      <a class="login-btn" routerLink="/login">Login</a>
+    }
+  </div>
+</header>

@@ -1,0 +1,55 @@
+<section class="surface-card">
+  <h2 class="section-title">Topic Quiz</h2>
+  <p class="muted intro">{{ topic?.title || 'Select a topic' }}</p>
+
+  @if (topic?.requiresSubscription) {
+    <div class="premium-lock-panel">
+      <strong>Premium Access Required</strong>
+      <p>
+        This MCQ set is available only with Premium Access. Unlock this chapter to continue.
+      </p>
+    </div>
+  } @else if (hasQuestions()) {
+    <div class="question-list">
+      @for (question of topic?.questions || []; track question.id) {
+        <article class="question-block" [class.locked-question]="isQuestionLocked(question)">
+          <div class="question-head">
+            <h3>{{ question.text }}</h3>
+            @if (isQuestionLocked(question)) {
+              <span class="premium-badge">{{ question.subscriptionLabel || 'Premium Access' }}</span>
+            }
+          </div>
+
+          @if (isQuestionLocked(question)) {
+            <div class="premium-lock-panel question-lock-panel">
+              <strong>Premium Access Required</strong>
+              <p>This question is part of the premium quiz set. Upgrade to unlock this MCQ.</p>
+            </div>
+          } @else {
+            <div class="options-grid">
+              @for (option of question.options; track option.id) {
+                <button
+                  type="button"
+                  class="option-btn"
+                  [class.selected]="isOptionSelected(question.id, option.id)"
+                  (click)="onSelectOption(question.id, option.id)"
+                >
+                  {{ option.text }}
+                </button>
+              }
+            </div>
+
+            @if (getSelectedOption(question); as selectedOption) {
+              <div class="result" [class.pass]="selectedOption.isCorrect" [class.fail]="!selectedOption.isCorrect">
+                <strong>{{ selectedOption.isCorrect ? 'Pass' : 'Fail' }}</strong>
+                <p>{{ selectedOption.explanation }}</p>
+              </div>
+            }
+          }
+        </article>
+      }
+    </div>
+  } @else {
+    <p class="muted empty-state">No MCQ added for this topic yet. Select another topic or add questions here.</p>
+  }
+</section>

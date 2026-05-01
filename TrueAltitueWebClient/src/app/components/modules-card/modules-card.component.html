@@ -1,0 +1,12 @@
+<section class="surface-card">
+  <h2 class="section-title">Current Modules</h2>
+
+  <ul class="list">
+    @for (item of modules; track item.label) {
+      <li>
+        <i [class]="item.iconClass" aria-hidden="true"></i>
+        <span>{{ item.label }}</span>
+      </li>
+    }
+  </ul>
+</section>

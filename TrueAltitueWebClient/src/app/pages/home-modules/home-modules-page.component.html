@@ -1,0 +1,32 @@
+<div class="home-modules-page">
+  <app-top-header greeting="Learning Hub" name="Mithun" avatarUrl="/images/cadet-avatar.svg"></app-top-header>
+
+  <section class="intro surface-card">
+    <span class="intro-kicker">Training Workspace</span>
+    <h2 class="intro-title">Choose where you want to continue your training.</h2>
+    <p class="muted">
+      Open a learning path, launch a timed assessment, or review your cockpit dashboard.
+      Each module is designed as a separate workspace so more training areas can be added cleanly over time.
+    </p>
+  </section>
+
+  <section class="card-grid">
+    @for (card of moduleCards; track card.title) {
+      @if (card.available && card.route) {
+        <a class="surface-card module-card" [routerLink]="card.route">
+          <div class="icon"><i [class]="card.iconClass" aria-hidden="true"></i></div>
+          <h3>{{ card.title }}</h3>
+          <p class="muted">{{ card.summary }}</p>
+          <span class="cta">Open Module</span>
+        </a>
+      } @else {
+        <article class="surface-card module-card disabled">
+          <div class="icon"><i [class]="card.iconClass" aria-hidden="true"></i></div>
+          <h3>{{ card.title }}</h3>
+          <p class="muted">{{ card.summary }}</p>
+          <span class="cta">Coming Soon</span>
+        </article>
+      }
+    }
+  </section>
+</div>

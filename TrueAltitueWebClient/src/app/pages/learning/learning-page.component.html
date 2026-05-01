@@ -1,0 +1,89 @@
+<div class="learning-page">
+  <div class="back-row">
+    <a class="back-link" routerLink="/learning/subjects">
+      <i class="fas fa-arrow-left" aria-hidden="true"></i>
+      <span>Back To Subjects</span>
+    </a>
+  </div>
+
+  <div class="mobile-topic-bar">
+    <button type="button" class="topic-picker-btn" (click)="openTopicPicker()">
+      <i class="fas fa-list-ul" aria-hidden="true"></i>
+      <span>Browse Topics</span>
+    </button>
+    <span class="current-topic-pill">{{ selectedTopic.title }}</span>
+  </div>
+
+  @if (isTopicPickerOpen) {
+    <div class="topic-picker-backdrop" (click)="closeTopicPicker()"></div>
+  }
+
+  <div class="learning-layout">
+    <aside class="surface-card topic-panel" [class.mobile-open]="isTopicPickerOpen">
+      <div class="topic-panel-head">
+        <h2 class="section-title">Select Topic ({{ selectedSubject.title }})</h2>
+        <button type="button" class="topic-close-btn" (click)="closeTopicPicker()" aria-label="Close topics">
+          <i class="fas fa-times" aria-hidden="true"></i>
+        </button>
+      </div>
+      <p class="muted">Topics shown are only from the chosen subject.</p>
+
+      <app-topic-tree
+        [topics]="selectedSubject.children || []"
+        [selectedTopicId]="selectedTopic.id"
+        (topicSelected)="onTopicSelected($event)"
+      ></app-topic-tree>
+    </aside>
+
+    <section class="content-panel">
+      <div class="surface-card topic-overview">
+        <h2 class="section-title">{{ selectedTopic.title }}</h2>
+        <p class="muted">{{ selectedTopic.description }}</p>
+
+        @if (isTopicGroup(selectedTopic)) {
+          <div class="group-summary muted">
+            <span>Subtopics: {{ selectedTopic.children?.length || 0 }}</span>
+            <span>Total MCQ: {{ topicTotalQuestionCount(selectedTopic) }}</span>
+          </div>
+        }
+      </div>
+
+      @if (isTopicGroup(selectedTopic)) {
+        <section class="surface-card child-topic-panel">
+          <h2 class="section-title">Select A Chapter Topic</h2>
+          <p class="muted">
+            This node is a topic group. Choose one chapter below to open its MCQ on the right panel.
+          </p>
+
+          <div class="child-topic-grid">
+            @for (childTopic of selectedTopic.children || []; track childTopic.id) {
+              <button
+                type="button"
+                class="child-topic-btn"
+                [class.locked]="!!childTopic.requiresSubscription"
+                [disabled]="!!childTopic.requiresSubscription"
+                (click)="selectChildTopic(childTopic)"
+              >
+                <span class="child-topic-head">
+                  <strong>{{ childTopic.title }}</strong>
+                  @if (childTopic.requiresSubscription) {
+                    <span class="premium-pill">{{ childTopic.subscriptionLabel || 'Premium Access' }}</span>
+                  }
+                </span>
+                <span>{{ childTopic.description }}</span>
+                <em>{{ topicQuestionCount(childTopic) }} MCQ</em>
+              </button>
+            }
+          </div>
+        </section>
+      } @else {
+        <app-topic-quiz [topic]="selectedTopic"></app-topic-quiz>
+      }
+
+      <div class="resources-grid">
+        <app-video-course [topic]="selectedTopic"></app-video-course>
+        <app-chapter-blogs [topic]="selectedTopic"></app-chapter-blogs>
+      </div>
+    </section>
+  </div>
+</div>

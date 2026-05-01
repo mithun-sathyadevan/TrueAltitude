@@ -1,0 +1,21 @@
+<section class="surface-card">
+  <h2 class="section-title">Chapter Blogs</h2>
+  <p class="muted intro">{{ topic?.title || 'Select a topic' }}</p>
+
+  @if (topic?.blogs?.length) {
+    <div class="blog-list">
+      @for (blog of topic?.blogs || []; track blog.id) {
+        <article class="blog-card">
+          <div class="blog-top">
+            <span class="chapter">{{ blog.chapter }}</span>
+            <span class="read-time">{{ blog.readMinutes }} min</span>
+          </div>
+          <h3>{{ blog.title }}</h3>
+          <p class="muted">{{ blog.summary }}</p>
+        </article>
+      }
+    </div>
+  } @else {
+    <p class="muted">No chapter-wise blogs added for this topic yet.</p>
+  }
+</section>

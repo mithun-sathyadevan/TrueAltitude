@@ -1,0 +1,95 @@
+<div class="exam-page">
+  <section class="surface-card exam-header">
+    <h2 class="section-title">Real-Time Exam Quiz</h2>
+    <p class="muted">Timed simulation with instant fail/pass feedback and answer explanations.</p>
+
+    @if (!isExamStarted) {
+      <button type="button" class="primary-btn" (click)="startExam()">Start Exam</button>
+    } @else {
+      <div class="status-row">
+        <div class="pill">Time Left: {{ formattedTimeLeft() }}</div>
+        <div class="pill">Answered: {{ answeredCount() }}/{{ questions.length }}</div>
+
+        @if (!isExamFinished) {
+          <button type="button" class="primary-btn" (click)="submitExam()">Submit Exam</button>
+        } @else {
+          <button type="button" class="primary-btn" (click)="restartExam()">Retry</button>
+        }
+      </div>
+    }
+  </section>
+
+  @if (isExamStarted) {
+    <div class="exam-layout">
+      <aside class="surface-card question-nav">
+        <h3>Question Navigator</h3>
+
+        <div class="nav-grid">
+          @for (question of questions; track question.id; let i = $index) {
+            <button
+              type="button"
+              class="nav-btn"
+              [class.active]="activeQuestionIndex === i"
+              [class.answered]="!!selectedAnswers[question.id]"
+              (click)="goToQuestion(i)"
+            >
+              Q{{ i + 1 }}
+            </button>
+          }
+        </div>
+      </aside>
+
+      <section class="surface-card question-panel">
+        @if (questions[activeQuestionIndex]; as currentQuestion) {
+          <h3>{{ currentQuestion.text }}</h3>
+
+          <div class="options-grid">
+            @for (option of currentQuestion.options; track option.id) {
+              <button
+                type="button"
+                class="option-btn"
+                [class.selected]="selectedAnswers[currentQuestion.id] === option.id"
+                (click)="selectAnswer(currentQuestion.id, option.id)"
+              >
+                {{ option.text }}
+              </button>
+            }
+          </div>
+
+          @if (getSelectedOption(currentQuestion); as selected) {
+            <div class="result" [class.pass]="selected.isCorrect" [class.fail]="!selected.isCorrect">
+              <strong>{{ selected.isCorrect ? 'Pass' : 'Fail' }}</strong>
+              <p>{{ selected.explanation }}</p>
+            </div>
+          }
+
+          <div class="question-footer">
+            <button type="button" class="ghost-btn" (click)="prevQuestion()" [disabled]="activeQuestionIndex === 0">
+              Previous
+            </button>
+            <button
+              type="button"
+              class="ghost-btn"
+              (click)="nextQuestion()"
+              [disabled]="activeQuestionIndex === questions.length - 1"
+            >
+              Next
+            </button>
+          </div>
+        }
+      </section>
+    </div>
+  }
+
+  @if (isExamFinished) {
+    <section class="surface-card summary">
+      <h3>Exam Summary</h3>
+      <p>
+        Score: <strong>{{ scoreCount() }}/{{ questions.length }}</strong> ({{ passPercent() }}%)
+      </p>
+      <p [class.pass-text]="hasPassed()" [class.fail-text]="!hasPassed()">
+        {{ hasPassed() ? 'Result: PASS' : 'Result: FAIL' }}
+      </p>
+    </section>
+  }
+</div>

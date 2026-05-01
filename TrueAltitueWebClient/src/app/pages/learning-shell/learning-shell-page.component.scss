@@ -1,0 +1,128 @@
+.learning-shell {
+  padding: 20px;
+  position: relative;
+}
+
+.toolbar-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.module-toggle-btn {
+  border: 1px solid color-mix(in srgb, var(--accent-blue) 70%, white 30%);
+  background: color-mix(in srgb, var(--accent-blue) 18%, transparent 82%);
+  color: var(--text-main);
+  border-radius: 999px;
+  padding: 8px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.home-link-btn {
+  border: 1px solid color-mix(in srgb, var(--accent-blue) 70%, white 30%);
+  background: color-mix(in srgb, var(--accent-blue) 18%, transparent 82%);
+  color: var(--text-main);
+  border-radius: 999px;
+  padding: 8px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.popup-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.5);
+  z-index: 20;
+}
+
+.module-popup {
+  position: fixed;
+  top: 90px;
+  right: 20px;
+  width: min(460px, calc(100vw - 24px));
+  z-index: 30;
+  box-shadow: 0 24px 38px -24px rgba(2, 6, 23, 0.95);
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.popup-header .section-title {
+  margin-bottom: 0;
+}
+
+.close-btn {
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-main);
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+}
+
+.module-list {
+  display: grid;
+  gap: 8px;
+}
+
+.module-link {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: grid;
+  gap: 4px;
+  text-decoration: none;
+  color: var(--text-main);
+  transition: border-color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+}
+
+.module-link:hover {
+  transform: translateY(-1px);
+  background-color: color-mix(in srgb, var(--surface-strong) 70%, transparent 30%);
+}
+
+.module-link.active {
+  border-color: var(--accent-blue);
+  background-color: color-mix(in srgb, var(--accent-blue) 16%, transparent 84%);
+}
+
+.module-link strong {
+  font-size: 0.93rem;
+}
+
+.module-link span {
+  color: var(--text-dim);
+  font-size: 0.84rem;
+}
+
+.module-link.disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+}
+
+.module-content {
+  min-width: 0;
+}
+
+@media (max-width: 700px) {
+  .learning-shell {
+    padding: 12px;
+  }
+
+  .module-popup {
+    right: 12px;
+    top: 78px;
+    width: calc(100vw - 24px);
+  }
+}

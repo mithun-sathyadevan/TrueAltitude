@@ -1,0 +1,39 @@
+<ul class="tree-level" [class.root]="depth === 0">
+  @for (topic of topics; track topic.id) {
+    <li class="tree-item">
+      <button
+        type="button"
+        class="topic-button"
+        [class.selected]="topic.id === selectedTopicId"
+        [class.locked]="!!topic.requiresSubscription"
+        [style.padding-left.px]="12 + depth * 18"
+        [disabled]="!!topic.requiresSubscription"
+        (click)="onTopicSelected(topic)"
+      >
+        <span class="topic-title-row">
+          <span class="topic-title">{{ topic.title }}</span>
+          @if (topic.requiresSubscription) {
+            <span class="topic-badge">{{ topic.subscriptionLabel || 'Premium Access' }}</span>
+          }
+        </span>
+        <span class="topic-meta">
+          @if (topic.children?.length) {
+            <span class="child-count">{{ topic.children?.length }}</span>
+          }
+          @if (topic.requiresSubscription) {
+            <i class="fas fa-lock lock-icon" aria-hidden="true"></i>
+          }
+        </span>
+      </button>
+
+      @if (topic.children?.length) {
+        <app-topic-tree
+          [topics]="topic.children || []"
+          [depth]="depth + 1"
+          [selectedTopicId]="selectedTopicId"
+          (topicSelected)="onTopicSelected($event)"
+        ></app-topic-tree>
+      }
+    </li>
+  }
+</ul>

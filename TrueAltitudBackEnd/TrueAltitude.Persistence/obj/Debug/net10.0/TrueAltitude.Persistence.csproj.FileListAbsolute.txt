@@ -1,0 +1,17 @@
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Persistence\bin\Debug\net10.0\TrueAltitude.Persistence.deps.json
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Persistence\bin\Debug\net10.0\TrueAltitude.Persistence.runtimeconfig.json
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Persistence\bin\Debug\net10.0\TrueAltitude.Persistence.dll
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Persistence\bin\Debug\net10.0\TrueAltitude.Persistence.pdb
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Persistence\bin\Debug\net10.0\TrueAltitude.Domain.dll
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Persistence\bin\Debug\net10.0\TrueAltitude.Domain.pdb
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Persistence\obj\Debug\net10.0\TrueAltitude.Persistence.csproj.AssemblyReference.cache
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Persistence\obj\Debug\net10.0\TrueAltitude.Persistence.GeneratedMSBuildEditorConfig.editorconfig
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Persistence\obj\Debug\net10.0\TrueAltitude.Persistence.AssemblyInfoInputs.cache
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Persistence\obj\Debug\net10.0\TrueAltitude.Persistence.AssemblyInfo.cs
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Persistence\obj\Debug\net10.0\TrueAltitude.Persistence.csproj.CoreCompileInputs.cache
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Persistence\obj\Debug\net10.0\TrueAlti.34955D83.Up2Date
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Persistence\obj\Debug\net10.0\TrueAltitude.Persistence.dll
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Persistence\obj\Debug\net10.0\refint\TrueAltitude.Persistence.dll
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Persistence\obj\Debug\net10.0\TrueAltitude.Persistence.pdb
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Persistence\obj\Debug\net10.0\TrueAltitude.Persistence.genruntimeconfig.cache
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Persistence\obj\Debug\net10.0\ref\TrueAltitude.Persistence.dll

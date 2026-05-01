@@ -1,0 +1,17 @@
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Infrastructure\obj\Debug\net10.0\TrueAltitude.Infrastructure.csproj.AssemblyReference.cache
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Infrastructure\obj\Debug\net10.0\TrueAltitude.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Infrastructure\obj\Debug\net10.0\TrueAltitude.Infrastructure.AssemblyInfoInputs.cache
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Infrastructure\obj\Debug\net10.0\TrueAltitude.Infrastructure.AssemblyInfo.cs
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Infrastructure\obj\Debug\net10.0\TrueAltitude.Infrastructure.csproj.CoreCompileInputs.cache
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Infrastructure\bin\Debug\net10.0\TrueAltitude.Infrastructure.deps.json
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Infrastructure\bin\Debug\net10.0\TrueAltitude.Infrastructure.dll
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Infrastructure\bin\Debug\net10.0\TrueAltitude.Infrastructure.pdb
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Infrastructure\bin\Debug\net10.0\TrueAltitude.Domain.dll
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Infrastructure\bin\Debug\net10.0\TrueAltitude.Persistence.dll
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Infrastructure\bin\Debug\net10.0\TrueAltitude.Persistence.pdb
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Infrastructure\bin\Debug\net10.0\TrueAltitude.Domain.pdb
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Infrastructure\obj\Debug\net10.0\TrueAlti.7C3FEA7F.Up2Date
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Infrastructure\obj\Debug\net10.0\TrueAltitude.Infrastructure.dll
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Infrastructure\obj\Debug\net10.0\refint\TrueAltitude.Infrastructure.dll
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Infrastructure\obj\Debug\net10.0\TrueAltitude.Infrastructure.pdb
+C:\AthulB\TrueAltitude\TrueAltitudBackEnd\TrueAltitude.Infrastructure\obj\Debug\net10.0\ref\TrueAltitude.Infrastructure.dll

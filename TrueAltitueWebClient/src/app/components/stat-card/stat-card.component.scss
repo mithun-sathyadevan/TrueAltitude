@@ -1,0 +1,17 @@
+.stat-card {
+  min-height: 142px;
+}
+
+.progress-bar {
+  background-color: var(--surface-strong);
+  height: 10px;
+  border-radius: 5px;
+  margin: 15px 0 5px;
+  overflow: hidden;
+}
+
+.fill {
+  background-color: var(--accent-blue);
+  height: 100%;
+  border-radius: 5px;
+}

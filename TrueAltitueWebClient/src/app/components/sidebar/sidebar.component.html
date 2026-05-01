@@ -1,0 +1,17 @@
+<nav class="sidebar surface-card">
+  <div class="logo">
+    <i class="fas fa-plane-departure" aria-hidden="true"></i>
+    <span>COCKPIT</span>
+  </div>
+
+  <ul class="nav-links">
+    @for (item of navItems; track item.label) {
+      <li [class.active]="item.active">
+        <a href="#" (click)="$event.preventDefault()">
+          <i [class]="item.iconClass" aria-hidden="true"></i>
+          <span>{{ item.label }}</span>
+        </a>
+      </li>
+    }
+  </ul>
+</nav>

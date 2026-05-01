@@ -1,0 +1,57 @@
+<div class="learning-shell">
+  <app-top-header greeting="Learning Dashboard" name="Mithun" avatarUrl="/images/cadet-avatar.svg"></app-top-header>
+
+  <div class="toolbar-row">
+    @if (isSubjectsRoute) {
+      <a class="home-link-btn" routerLink="/">
+        <i class="fas fa-house" aria-hidden="true"></i>
+        <span>Home</span>
+      </a>
+    } @else {
+      <button type="button" class="module-toggle-btn" (click)="toggleModulePopup()">
+        <i class="fas fa-layer-group" aria-hidden="true"></i>
+        <span>Modules</span>
+      </button>
+    }
+  </div>
+
+  @if (isModulePopupOpen) {
+    <div class="popup-backdrop" (click)="closeModulePopup()"></div>
+
+    <section class="surface-card module-popup" role="dialog" aria-label="Learning modules">
+      <div class="popup-header">
+        <h2 class="section-title">Modules</h2>
+        <button type="button" class="close-btn" (click)="closeModulePopup()" aria-label="Close modules">
+          <i class="fas fa-times" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div class="module-list">
+        @for (module of modules; track module.label) {
+          @if (module.available) {
+            <a
+              [routerLink]="module.route"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: true }"
+              class="module-link"
+              [title]="module.description"
+              (click)="closeModulePopup()"
+            >
+              <strong>{{ module.label }}</strong>
+              <span>{{ module.description }}</span>
+            </a>
+          } @else {
+            <div class="module-link disabled" [title]="module.description">
+              <strong>{{ module.label }}</strong>
+              <span>{{ module.description }}</span>
+            </div>
+          }
+        }
+      </div>
+    </section>
+  }
+
+  <section class="module-content">
+    <router-outlet></router-outlet>
+  </section>
+</div>

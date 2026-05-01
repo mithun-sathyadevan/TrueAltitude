@@ -1,0 +1,18 @@
+<div class="dashboard-shell">
+  <app-sidebar></app-sidebar>
+
+  <main class="main-content">
+    <app-top-header></app-top-header>
+
+    <section class="stats-grid">
+      <app-stat-card title="Course Progress" [progressPercent]="75" progressLabel="75% Completed"></app-stat-card>
+      <app-stat-card title="Flight Hours" value="120 / 200"></app-stat-card>
+      <app-stat-card title="GPA" value="3.8"></app-stat-card>
+    </section>
+
+    <section class="dashboard-grid">
+      <app-modules-card></app-modules-card>
+      <app-exams-card></app-exams-card>
+    </section>
+  </main>
+</div>

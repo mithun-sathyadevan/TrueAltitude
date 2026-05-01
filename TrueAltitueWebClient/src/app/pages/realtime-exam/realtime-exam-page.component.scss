@@ -1,0 +1,150 @@
+.exam-page {
+  display: grid;
+  gap: 16px;
+}
+
+.exam-header p {
+  margin-bottom: 14px;
+}
+
+.status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.pill {
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  padding: 8px 12px;
+  font-size: 0.88rem;
+}
+
+.exam-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 16px;
+}
+
+.question-nav h3 {
+  margin-bottom: 10px;
+}
+
+.nav-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.nav-btn {
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-main);
+  border-radius: 8px;
+  padding: 8px 0;
+  cursor: pointer;
+}
+
+.nav-btn.active {
+  border-color: var(--accent-blue);
+}
+
+.nav-btn.answered {
+  background: color-mix(in srgb, var(--accent-blue) 14%, transparent 86%);
+}
+
+.question-panel h3 {
+  margin-bottom: 12px;
+  font-size: 1.02rem;
+}
+
+.options-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.option-btn {
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--card-bg) 80%, #0b1120 20%);
+  color: var(--text-main);
+  border-radius: 10px;
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.option-btn.selected {
+  border-color: var(--accent-blue);
+}
+
+.result {
+  margin-top: 12px;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.result.pass {
+  background: color-mix(in srgb, #22c55e 22%, transparent 78%);
+  border: 1px solid color-mix(in srgb, #22c55e 45%, transparent 55%);
+}
+
+.result.fail {
+  background: color-mix(in srgb, #ef4444 18%, transparent 82%);
+  border: 1px solid color-mix(in srgb, #ef4444 40%, transparent 60%);
+}
+
+.result p {
+  margin-top: 6px;
+  margin-bottom: 0;
+}
+
+.question-footer {
+  margin-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.primary-btn,
+.ghost-btn {
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  padding: 9px 14px;
+  cursor: pointer;
+  color: var(--text-main);
+}
+
+.primary-btn {
+  border-color: color-mix(in srgb, var(--accent-blue) 70%, white 30%);
+  background: color-mix(in srgb, var(--accent-blue) 25%, transparent 75%);
+}
+
+.ghost-btn {
+  background: transparent;
+}
+
+.ghost-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.summary p {
+  margin-bottom: 8px;
+}
+
+.pass-text {
+  color: #22c55e;
+  font-weight: 700;
+}
+
+.fail-text {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .exam-layout {
+    grid-template-columns: 1fr;
+  }
+}

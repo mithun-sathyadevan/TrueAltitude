@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap');
+
+:root {
+	--bg-dark: #0f172a;
+	--bg-glow: radial-gradient(circle at 8% 10%, #1d3b5f 0%, transparent 46%),
+		radial-gradient(circle at 92% 88%, #10364a 0%, transparent 48%);
+	--card-bg: #1e293b;
+	--surface-strong: #334155;
+	--accent-blue: #38bdf8;
+	--text-main: #f8fafc;
+	--text-dim: #94a3b8;
+	--border-color: #334155;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	min-height: 100%;
+}
+
+body {
+	margin: 0;
+	font-family: 'Manrope', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+	background-color: var(--bg-dark);
+	background-image: var(--bg-glow);
+	background-attachment: fixed;
+	color: var(--text-main);
+}
+
+h1,
+h2,
+h3,
+p {
+	margin-top: 0;
+}
+
+h1 {
+	font-size: clamp(1.6rem, 1.2rem + 1.2vw, 2.3rem);
+	margin-bottom: 0;
+}
+
+.surface-card {
+	background-color: color-mix(in srgb, var(--card-bg) 94%, #0b1120 6%);
+	padding: 20px;
+	border-radius: 12px;
+	border: 1px solid var(--border-color);
+	box-shadow: 0 14px 30px -20px rgba(15, 23, 42, 0.85);
+}
+
+.section-title {
+	font-size: 1.05rem;
+	letter-spacing: 0.01em;
+	margin-bottom: 14px;
+}
+
+.big-number {
+	font-size: clamp(1.7rem, 1.3rem + 1vw, 2rem);
+	font-weight: 800;
+	color: var(--accent-blue);
+	margin-bottom: 0;
+}
+
+.muted {
+	color: var(--text-dim);
+}
+
+@media (max-width: 600px) {
+	.surface-card {
+		padding: 16px;
+	}
+}
