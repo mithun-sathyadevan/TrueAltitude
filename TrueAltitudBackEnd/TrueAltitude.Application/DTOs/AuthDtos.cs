@@ -14,6 +14,22 @@ public class LoginUserDto
     public string Password { get; set; } = string.Empty;
 }
 
+public class GoogleLoginDto
+{
+    public string Token { get; set; } = string.Empty;
+}
+
+public class VerifyEmailDto
+{
+    public string Email { get; set; } = string.Empty;
+    public string OtpCode { get; set; } = string.Empty;
+}
+
+public class ResendOtpDto
+{
+    public string Email { get; set; } = string.Empty;
+}
+
 public class UserResponseDto
 {
     public int Id { get; set; }
@@ -21,6 +37,7 @@ public class UserResponseDto
     public string Email { get; set; } = string.Empty;
     public string? AvatarUrl { get; set; }
     public string Provider { get; set; } = string.Empty;
+    public bool IsEmailVerified { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? LastLoginAt { get; set; }
 }

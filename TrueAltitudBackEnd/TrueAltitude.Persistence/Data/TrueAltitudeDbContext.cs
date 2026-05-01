@@ -41,7 +41,14 @@ public class TrueAltitudeDbContext : DbContext
                 .HasDefaultValue("local");
 
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                .HasColumnType("datetime(6)")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+
+            entity.Property(e => e.OtpCode)
+                .HasMaxLength(10);
+
+            entity.Property(e => e.OtpExpiresAt)
+                .HasColumnType("datetime(6)");
 
             entity.HasIndex(e => e.Email).IsUnique();
         });

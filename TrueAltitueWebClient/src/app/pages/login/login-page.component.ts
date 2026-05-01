@@ -1,4 +1,5 @@
-import { AfterViewInit, Component, ElementRef, ViewChild, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { environment } from '../../../environments/environment';
@@ -31,14 +32,18 @@ declare global {
 @Component({
   selector: 'app-login-page',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, FormsModule],
   templateUrl: './login-page.component.html',
   styleUrl: './login-page.component.scss',
 })
-export class LoginPageComponent implements AfterViewInit {
+export class LoginPageComponent implements AfterViewInit, OnInit {
   protected readonly appTitle = 'TrueAltitude';
   protected readonly googleError = signal('');
   protected readonly isGoogleConfigured = signal(false);
+  protected email = '';
+  protected password = '';
+  protected errorMessage = '';
+  private googleInitialized = false;
 
   @ViewChild('googleButtonContainer')
   private googleButtonContainer?: ElementRef<HTMLDivElement>;
@@ -49,13 +54,47 @@ export class LoginPageComponent implements AfterViewInit {
     private readonly route: ActivatedRoute,
   ) {}
 
+  ngOnInit(): void {
+    const emailFromQuery = this.route.snapshot.queryParamMap.get('email');
+    if (emailFromQuery) {
+      this.email = decodeURIComponent(emailFromQuery);
+    }
+
+    const info = this.route.snapshot.queryParamMap.get('info');
+    if (info === 'already-registered') {
+      this.errorMessage = 'Email already registered. Please log in with your password.';
+    }
+  }
+
   ngAfterViewInit(): void {
     this.initGoogleLogin();
   }
 
-  protected onLogin(event: Event): void {
+  protected async onLogin(event: Event): Promise<void> {
     event.preventDefault();
-    this.authService.login('Mithun');
+    this.errorMessage = '';
+
+    if (!this.email.trim() || !this.password) {
+      this.errorMessage = 'Email and password are required.';
+      return;
+    }
+
+    const result = await this.authService.loginWithCredentials({
+      email: this.email.trim(),
+      password: this.password,
+    });
+
+    if (!result.success) {
+      // Unverified email — fresh OTP was sent, redirect to verify page
+      if (result.user?.email) {
+        void this.router.navigate(['/verify-email'], {
+          queryParams: { email: encodeURIComponent(result.user.email) }
+        });
+        return;
+      }
+      this.errorMessage = result.message || 'Login failed.';
+      return;
+    }
 
     this.navigateAfterLogin();
   }
@@ -71,6 +110,10 @@ export class LoginPageComponent implements AfterViewInit {
   }
 
   private initGoogleLogin(attempt = 0): void {
+    if (this.googleInitialized) {
+      return;
+    }
+
     const googleClientId = environment.googleClientId || '';
     if (!googleClientId) {
       this.googleError.set('Google login is not configured yet. Update environment config with a valid Google Client ID.');
@@ -102,44 +145,27 @@ export class LoginPageComponent implements AfterViewInit {
     });
 
     this.isGoogleConfigured.set(true);
+    this.googleInitialized = true;
   }
 
-  private onGoogleCredential(response: GoogleCredentialResponse): void {
-    const profile = this.decodeJwtPayload(response.credential);
-    this.authService.loginWithProfile({
-      name: profile?.name || 'Mithun',
-      email: profile?.email,
-      avatarUrl: profile?.picture,
-      provider: 'google',
-    });
-
-    this.navigateAfterLogin();
-  }
-
-  private decodeJwtPayload(token?: string):
-    | { name?: string; email?: string; picture?: string }
-    | undefined {
-    if (!token) {
-      return undefined;
+  private async onGoogleCredential(response: GoogleCredentialResponse): Promise<void> {
+    if (!response.credential) {
+      this.googleError.set('No credential received from Google.');
+      return;
     }
 
     try {
-      const payloadSegment = token.split('.')[1];
-      if (!payloadSegment) {
-        return undefined;
+      // Send the Google ID token to the backend
+      const result = await this.authService.loginWithGoogleToken(response.credential);
+
+      if (result.success) {
+        this.navigateAfterLogin();
+      } else {
+        this.googleError.set(result.message);
       }
-
-      const base64 = payloadSegment.replace(/-/g, '+').replace(/_/g, '/');
-      const json = decodeURIComponent(
-        atob(base64)
-          .split('')
-          .map((char) => `%${`00${char.charCodeAt(0).toString(16)}`.slice(-2)}`)
-          .join(''),
-      );
-
-      return JSON.parse(json) as { name?: string; email?: string; picture?: string };
-    } catch {
-      return undefined;
+    } catch (error) {
+      console.error('Google authentication error:', error);
+      this.googleError.set('An error occurred during Google authentication.');
     }
   }
 

@@ -1,0 +1,89 @@
+.loader-shell {
+  position: fixed;
+  inset: 0 auto auto 0;
+  width: 100%;
+  z-index: var(--api-loader-z-index, 1200);
+  pointer-events: none;
+}
+
+.loader-track {
+  height: var(--api-loader-track-height, 3px);
+  width: 100%;
+  background: var(--api-loader-track-color, rgba(15, 23, 42, 0.14));
+  overflow: hidden;
+}
+
+.loader-bar {
+  display: block;
+  height: 100%;
+  width: var(--api-loader-bar-width, 35%);
+  background: var(--api-loader-gradient, linear-gradient(90deg, #0ea5e9 0%, #14b8a6 100%));
+  animation: loader-slide var(--api-loader-animation-duration, 1s) ease-in-out infinite;
+}
+
+.loader-chip {
+  margin: var(--api-loader-chip-margin-top, 10px) auto 0;
+  width: fit-content;
+  background: var(--api-loader-chip-bg, rgba(15, 23, 42, 0.9));
+  color: var(--api-loader-chip-color, #f8fafc);
+  font-size: var(--api-loader-chip-font-size, 12px);
+  letter-spacing: 0.02em;
+  border-radius: var(--api-loader-chip-radius, 999px);
+  padding: var(--api-loader-chip-padding, 5px 10px);
+  box-shadow: var(--api-loader-chip-shadow, 0 8px 24px rgba(15, 23, 42, 0.2));
+}
+
+.loader-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--api-loader-overlay-bg, rgba(2, 6, 23, 0.24));
+  backdrop-filter: blur(1px);
+}
+
+.loader-center {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--api-loader-center-bg, rgba(15, 23, 42, 0.92));
+  color: var(--api-loader-center-color, #f8fafc);
+  box-shadow: var(--api-loader-center-shadow, 0 12px 32px rgba(15, 23, 42, 0.25));
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  animation: spin 0.7s linear infinite;
+}
+
+.loader-text {
+  font-size: 13px;
+  letter-spacing: 0.01em;
+}
+
+@keyframes loader-slide {
+  0% {
+    transform: translateX(-130%);
+  }
+  50% {
+    transform: translateX(110%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

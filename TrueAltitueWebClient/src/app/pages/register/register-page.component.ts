@@ -26,7 +26,7 @@ export class RegisterPageComponent {
     private readonly route: ActivatedRoute,
   ) {}
 
-  protected onRegister(event: Event): void {
+  protected async onRegister(event: Event): Promise<void> {
     event.preventDefault();
     this.errorMessage = '';
     this.successMessage = '';
@@ -56,18 +56,35 @@ export class RegisterPageComponent {
       return;
     }
 
-    // Perform registration with local login
-    this.authService.loginWithProfile({
-      name: this.name,
-      email: this.email,
-      provider: 'local',
+    const response = await this.authService.register({
+      name: this.name.trim(),
+      email: this.email.trim(),
+      password: this.password,
     });
 
-    this.successMessage = 'Registration successful! Redirecting...';
+    if (!response.success) {
+      const isAlreadyRegistered = (response.message || '').toLowerCase().includes('email already registered');
+      if (isAlreadyRegistered) {
+        void this.router.navigate(['/login'], {
+          queryParams: {
+            email: encodeURIComponent(this.email.trim()),
+            info: 'already-registered'
+          }
+        });
+        return;
+      }
+
+      this.errorMessage = response.message || 'Registration failed.';
+      return;
+    }
+
+    // success=true covers both new registrations and returning unverified users (OTP resent)
+    this.successMessage = response.message || 'Please check your email for a verification code.';
 
     setTimeout(() => {
-      const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/';
-      void this.router.navigateByUrl(returnUrl);
+      void this.router.navigate(['/verify-email'], {
+        queryParams: { email: encodeURIComponent(this.email.trim()) }
+      });
     }, 1000);
   }
 }

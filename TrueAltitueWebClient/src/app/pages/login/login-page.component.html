@@ -5,10 +5,14 @@
 
     <form class="login-form" (submit)="onLogin($event)">
       <label for="email">Email</label>
-      <input id="email" type="email" placeholder="mithun@example.com" />
+      <input id="email" type="email" placeholder="mithun@example.com" [(ngModel)]="email" name="email" />
 
       <label for="password">Password</label>
-      <input id="password" type="password" placeholder="Enter your password" />
+      <input id="password" type="password" placeholder="Enter your password" [(ngModel)]="password" name="password" />
+
+      @if (errorMessage) {
+        <p class="error-message">{{ errorMessage }}</p>
+      }
 
       <button type="submit" class="primary-btn">Login</button>
     </form>

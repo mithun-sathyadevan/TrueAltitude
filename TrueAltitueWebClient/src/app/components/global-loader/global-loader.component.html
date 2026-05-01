@@ -1,0 +1,12 @@
+<div class="loader-shell" *ngIf="loadingService.isLoading()">
+  <div class="loader-track">
+    <span class="loader-bar"></span>
+  </div>
+
+  <div class="loader-overlay" *ngIf="loadingService.isBlockingLoading()">
+    <div class="loader-center" role="status" aria-live="polite" aria-label="Loading">
+      <span class="spinner"></span>
+      <span class="loader-text">Please wait...</span>
+    </div>
+  </div>
+</div>

@@ -29,12 +29,6 @@ public class AuthController : ControllerBase
         }
 
         var result = await _authService.RegisterAsync(dto);
-
-        if (!result.Success)
-        {
-            return BadRequest(result);
-        }
-
         return Ok(result);
     }
 
@@ -50,12 +44,6 @@ public class AuthController : ControllerBase
         }
 
         var result = await _authService.LoginAsync(dto);
-
-        if (!result.Success)
-        {
-            return Unauthorized(result);
-        }
-
         return Ok(result);
     }
 
@@ -63,7 +51,7 @@ public class AuthController : ControllerBase
     /// Login with Google token
     /// </summary>
     [HttpPost("login-google")]
-    public async Task<IActionResult> LoginGoogle([FromBody] GoogleTokenDto dto)
+    public async Task<IActionResult> LoginGoogle([FromBody] GoogleLoginDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.Token))
         {
@@ -71,17 +59,36 @@ public class AuthController : ControllerBase
         }
 
         var result = await _authService.LoginWithGoogleAsync(dto.Token);
-
-        if (!result.Success)
-        {
-            return Unauthorized(result);
-        }
-
         return Ok(result);
     }
-}
 
-public class GoogleTokenDto
-{
-    public string Token { get; set; } = string.Empty;
+    /// <summary>
+    /// Verify email with OTP code
+    /// </summary>
+    [HttpPost("verify-email")]
+    public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.OtpCode))
+        {
+            return BadRequest(new { message = "Email and OTP code are required." });
+        }
+
+        var result = await _authService.VerifyEmailAsync(dto);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Resend OTP verification code
+    /// </summary>
+    [HttpPost("resend-otp")]
+    public async Task<IActionResult> ResendOtp([FromBody] ResendOtpDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Email))
+        {
+            return BadRequest(new { message = "Email is required." });
+        }
+
+        var result = await _authService.ResendOtpAsync(dto.Email);
+        return Ok(result);
+    }
 }

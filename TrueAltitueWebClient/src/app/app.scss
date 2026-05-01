@@ -1,0 +1,19 @@
+:root {
+	--api-loader-z-index: 1200;
+	--api-loader-track-height: 3px;
+	--api-loader-track-color: rgba(15, 23, 42, 0.14);
+	--api-loader-gradient: linear-gradient(90deg, #0ea5e9 0%, #14b8a6 100%);
+	--api-loader-bar-width: 35%;
+	--api-loader-chip-bg: rgba(15, 23, 42, 0.9);
+	--api-loader-chip-color: #f8fafc;
+	--api-loader-chip-font-size: 12px;
+	--api-loader-chip-padding: 5px 10px;
+	--api-loader-chip-radius: 999px;
+	--api-loader-chip-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
+	--api-loader-chip-margin-top: 10px;
+	--api-loader-animation-duration: 1s;
+	--api-loader-overlay-bg: rgba(2, 6, 23, 0.24);
+	--api-loader-center-bg: rgba(15, 23, 42, 0.92);
+	--api-loader-center-color: #f8fafc;
+	--api-loader-center-shadow: 0 12px 32px rgba(15, 23, 42, 0.25);
+}

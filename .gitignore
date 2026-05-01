@@ -1,0 +1,24 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/TrueAltitudBackEnd/.vs/TrueAltitude/CopilotIndices/17.14.734.62261
+/TrueAltitudBackEnd/.vs/TrueAltitude.slnx/DesignTimeBuild
+
+# Visual Studio / IDE
+.vs/
+*.user
+*.suo
+*.userosscache
+
+# Build output
+**/bin/
+**/obj/
+
+# Frontend artifacts
+TrueAltitueWebClient/node_modules/
+TrueAltitueWebClient/dist/
+
+# OS/editor
+.DS_Store
+Thumbs.db

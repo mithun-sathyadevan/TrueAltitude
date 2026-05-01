@@ -9,6 +9,9 @@ public class User
     public string? AvatarUrl { get; set; }
     public string Provider { get; set; } = "local"; // local, google, etc.
     public bool IsActive { get; set; } = true;
+    public bool IsEmailVerified { get; set; } = false;
+    public string? OtpCode { get; set; }
+    public DateTime? OtpExpiresAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
     public DateTime? LastLoginAt { get; set; }

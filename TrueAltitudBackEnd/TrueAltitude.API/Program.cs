@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using TrueAltitude.Application.Services;
@@ -26,10 +27,16 @@ builder.Services.AddDbContext<TrueAltitudeDbContext>(options =>
 );
 
 // ===== Dependency Injection =====
+builder.Services.AddHttpClient();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IGoogleOAuthService, GoogleOAuthService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IAuthService>(provider =>
     new AuthService(
         provider.GetRequiredService<IUserRepository>(),
+        provider.GetRequiredService<IGoogleOAuthService>(),
+        provider.GetRequiredService<IEmailService>(),
+        provider.GetRequiredService<ILogger<AuthService>>(),
         jwtSecret,
         jwtIssuer,
         jwtAudience
@@ -70,7 +77,12 @@ builder.Services.AddCors(options =>
 });
 
 // ===== API Versioning & Documentation =====
-builder.Services.AddApiVersioning();
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+});
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
@@ -83,7 +95,10 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
