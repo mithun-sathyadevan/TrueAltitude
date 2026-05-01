@@ -1,7 +1,8 @@
-using System.Net;
-using System.Net.Mail;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using MimeKit;
 
 namespace TrueAltitude.Application.Services;
 
@@ -23,15 +24,15 @@ public class EmailService : IEmailService
 
     public async Task SendOtpEmailAsync(string toEmail, string toName, string otpCode)
     {
-        var smtpHost = _configuration["Email:SmtpHost"] ?? "smtp.titan.email";
-        var smtpPort = int.Parse(_configuration["Email:SmtpPort"] ?? "587");
+        var smtpHost = _configuration["Email:SmtpHost"] ?? "smtpout.secureserver.net";
+        var smtpPort = int.Parse(_configuration["Email:SmtpPort"] ?? "465");
         var smtpUsername = _configuration["Email:SmtpUsername"] ?? _configuration["Email:FromEmail"] ?? "athul@truealtitude.in";
         var fromEmail = _configuration["Email:FromEmail"] ?? "athul@truealtitude.in";
         var fromPassword = _configuration["Email:Password"] ?? string.Empty;
         var fromName = _configuration["Email:FromName"] ?? "TrueAltitude";
 
         var subject = "Your TrueAltitude Verification Code";
-        var body = $@"
+        var bodyHtml = $@"
 <!DOCTYPE html>
 <html>
 <body style=""font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;"">
@@ -51,28 +52,22 @@ public class EmailService : IEmailService
 
         try
         {
-            // Log OTP to console for debugging (remove in production)
             _logger.LogWarning("DEBUG OTP for {Email}: {Otp}", toEmail, otpCode);
 
-            using var client = new SmtpClient(smtpHost, smtpPort)
-            {
-                UseDefaultCredentials = false,
-                Credentials = new NetworkCredential(smtpUsername, fromPassword),
-                EnableSsl = true,  // STARTTLS on port 587
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-            };
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(fromName, fromEmail));
+            message.To.Add(new MailboxAddress(toName, toEmail));
+            message.Subject = subject;
+            message.Body = new TextPart("html") { Text = bodyHtml };
 
-            var mail = new MailMessage
-            {
-                From = new MailAddress(fromEmail, fromName),
-                Subject = subject,
-                Body = body,
-                IsBodyHtml = true,
-            };
+            using var client = new SmtpClient();
 
-            mail.To.Add(new MailAddress(toEmail, toName));
+            // SslOnConnect = implicit SSL — required for port 465
+            await client.ConnectAsync(smtpHost, smtpPort, SecureSocketOptions.SslOnConnect);
+            await client.AuthenticateAsync(smtpUsername, fromPassword);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
 
-            await client.SendMailAsync(mail);
             _logger.LogInformation("OTP email sent to {Email}", toEmail);
         }
         catch (Exception ex)

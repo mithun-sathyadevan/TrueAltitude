@@ -1,6 +1,5 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
-import { DashboardPageComponent } from './pages/dashboard/dashboard-page.component';
 import { HomeModulesPageComponent } from './pages/home-modules/home-modules-page.component';
 import { LearningPageComponent } from './pages/learning/learning-page.component';
 import { LearningShellPageComponent } from './pages/learning-shell/learning-shell-page.component';
@@ -29,6 +28,5 @@ export const routes: Routes = [
 			{ path: 'realtime-exam', component: RealtimeExamPageComponent },
 		],
 	},
-	{ path: 'dashboard', component: DashboardPageComponent, canActivate: [authGuard] },
 	{ path: '**', redirectTo: '' },
 ];

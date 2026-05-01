@@ -36,13 +36,6 @@ export class HomeModulesPageComponent {
       available: true,
     },
     {
-      title: 'Cockpit Dashboard',
-      summary: 'View key cockpit metrics, schedule, and activity snapshots.',
-      iconClass: 'fas fa-gauge-high',
-      route: '/dashboard',
-      available: true,
-    },
-    {
       title: 'Upcoming Module',
       summary: 'Reserved for future learning modules you add later.',
       iconClass: 'fas fa-plus-circle',
