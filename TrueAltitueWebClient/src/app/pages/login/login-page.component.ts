@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, signal } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
@@ -53,6 +53,7 @@ export class LoginPageComponent implements AfterViewInit, OnInit {
     private readonly authService: AuthService,
     private readonly router: Router,
     private readonly route: ActivatedRoute,
+    private readonly cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
@@ -64,6 +65,7 @@ export class LoginPageComponent implements AfterViewInit, OnInit {
     const info = this.route.snapshot.queryParamMap.get('info');
     if (info === 'already-registered') {
       this.errorMessage = 'Email already registered. Please log in with your password.';
+      this.cdr.markForCheck();
     }
   }
 
@@ -86,7 +88,8 @@ export class LoginPageComponent implements AfterViewInit, OnInit {
       password: this.password,
     });
 
-    if (!result.success) {
+    const isSuccess = result?.success === true;
+    if (!isSuccess) {
       // Unverified email — fresh OTP was sent, redirect to verify page
       if (result.user?.email) {
         void this.router.navigate(['/verify-email'], {
@@ -98,6 +101,7 @@ export class LoginPageComponent implements AfterViewInit, OnInit {
       const message = result.message || 'Login failed.';
       this.showDeactivatedAccountMessage = message.toLowerCase().includes('deactivated');
       this.errorMessage = message;
+      this.cdr.markForCheck();
       return;
     }
 
@@ -166,11 +170,16 @@ export class LoginPageComponent implements AfterViewInit, OnInit {
       if (result.success) {
         this.navigateAfterLogin();
       } else {
-        this.googleError.set(result.message);
+        const message = result.message || 'Google login failed.';
+        this.showDeactivatedAccountMessage = message.toLowerCase().includes('deactivated');
+        this.errorMessage = message;
+        this.googleError.set(message);
+        this.cdr.markForCheck();
       }
     } catch (error) {
       console.error('Google authentication error:', error);
       this.googleError.set('An error occurred during Google authentication.');
+      this.cdr.markForCheck();
     }
   }
 
