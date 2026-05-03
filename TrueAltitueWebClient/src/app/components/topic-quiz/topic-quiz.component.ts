@@ -36,6 +36,10 @@ export class TopicQuizComponent {
     return question.options.find((option) => option.id === selectedOptionId);
   }
 
+  protected getQuestionExplanation(question: TopicQuestion): string {
+    return question.explanation || '';
+  }
+
   protected isQuestionLocked(question: TopicQuestion): boolean {
     return !!question.requiresSubscription && !this.subscriptionAccessService.hasActiveSubscription();
   }

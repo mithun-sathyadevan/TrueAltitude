@@ -37,6 +37,8 @@ public class UserResponseDto
     public string Email { get; set; } = string.Empty;
     public string? AvatarUrl { get; set; }
     public string Provider { get; set; } = string.Empty;
+    public string Role { get; set; } = "Customer";
+    public bool IsActive { get; set; }
     public bool IsEmailVerified { get; set; }
     public string SubscriptionStatus { get; set; } = "none";
     public string? SubscriptionPlanCode { get; set; }

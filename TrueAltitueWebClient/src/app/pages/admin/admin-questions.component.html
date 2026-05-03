@@ -1,0 +1,172 @@
+<div class="admin-questions">
+  <div class="header-section">
+    <h1>Manage Questions</h1>
+    <button (click)="openCreateForm()" class="btn-primary">+ Add Question</button>
+  </div>
+
+  <div class="filters-section">
+    <input
+      type="text"
+      placeholder="Search questions by text, type, or explanation..."
+      [(ngModel)]="searchQuery"
+      (keyup.enter)="applyServerFilters()"
+      class="search-input">
+    <button type="button" (click)="applyServerFilters()" class="search-btn">Search</button>
+  </div>
+
+  <div class="results-summary" *ngIf="!loading">
+    <strong>Data Summary:</strong> Total Questions: {{ totalQuestions }} | Displayed: {{ questions.length }} | Current Page: {{ currentPage }} of {{ totalPages }}
+  </div>
+
+  <div *ngIf="!loading" class="questions-list">
+    <div *ngFor="let question of questions" class="question-card">
+      <div class="question-info">
+        <h3>{{ question.questionText }}</h3>
+        <div class="question-meta">
+          <span class="type-badge">{{ question.type }}</span>
+          <span class="difficulty-badge" [ngClass]="'difficulty-' + question.difficulty">
+            {{ getDifficultyLabel(question.difficulty) }}
+          </span>
+          <span class="options-count">{{ question.options.length }} options</span>
+        </div>
+        <div *ngIf="question.explanationText" class="explanation">
+          <strong>Explanation:</strong> {{ question.explanationText }}
+        </div>
+        <div class="options-preview">
+          <div *ngFor="let option of question.options" class="option-item">
+            <span [class.correct]="option.isCorrect">
+              {{ option.isCorrect ? '✓' : '○' }} {{ option.optionText }}
+            </span>
+          </div>
+        </div>
+
+        <div class="linked-topics-section">
+          <div class="linked-topics-header">Linked Topics</div>
+
+          <div *ngIf="question.linkedTopics.length > 0" class="linked-topic-list">
+            <div *ngFor="let linkedTopic of question.linkedTopics" class="linked-topic-chip">
+              <span>{{ linkedTopic.parentTopicTitle ? linkedTopic.parentTopicTitle + ' / ' : '' }}{{ linkedTopic.title }}</span>
+              <small>Order {{ linkedTopic.sortOrder }}</small>
+              <button type="button" (click)="unlinkQuestionFromTopic(question, linkedTopic)" class="btn-unlink">Unlink</button>
+            </div>
+          </div>
+
+          <p *ngIf="question.linkedTopics.length === 0" class="no-linked-topics">Not linked to any topic yet.</p>
+
+          <div class="link-topic-controls">
+            <select
+              [ngModel]="linkingSubjectIdByQuestionId[question.id]"
+              (ngModelChange)="onLinkSubjectChange(question.id, $event)"
+              [ngModelOptions]="{ standalone: true }">
+              <option [ngValue]="null">Select subject</option>
+              <option *ngFor="let subject of subjects" [ngValue]="subject.id">{{ subject.title }}</option>
+            </select>
+
+            <select
+              [(ngModel)]="linkingTopicIdByQuestionId[question.id]"
+              [ngModelOptions]="{ standalone: true }">
+              <option [ngValue]="null">Select topic</option>
+              <option *ngFor="let topic of getAvailableTopics(question)" [ngValue]="topic.id">
+                {{ topic.parentTopicTitle ? topic.parentTopicTitle + ' / ' : '' }}{{ topic.title }}
+              </option>
+            </select>
+
+            <input
+              type="number"
+              min="0"
+              [(ngModel)]="linkingSortOrderByQuestionId[question.id]"
+              [ngModelOptions]="{ standalone: true }"
+              placeholder="Sort order">
+
+            <button type="button" (click)="linkQuestionToSelectedTopic(question)" class="btn-link-topic">Link to Topic</button>
+          </div>
+        </div>
+      </div>
+      <div class="question-actions">
+        <button (click)="openEditForm(question)" class="btn-edit">Edit</button>
+        <button (click)="deleteQuestion(question.id)" class="btn-delete">Delete</button>
+      </div>
+    </div>
+
+    <div *ngIf="questions.length === 0" class="no-data">
+      No questions found. Create one!
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading">Loading questions...</div>
+
+  <div class="pagination">
+    <button (click)="previousPage()" [disabled]="currentPage === 1" class="pagination-btn">Previous</button>
+    <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
+    <button (click)="nextPage()" [disabled]="currentPage === totalPages" class="pagination-btn">Next</button>
+  </div>
+
+  <!-- Form Modal -->
+  <div *ngIf="showForm" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>{{ formMode === 'create' ? 'Create Question' : 'Edit Question' }}</h2>
+        <button (click)="closeForm()" class="close-btn">×</button>
+      </div>
+
+      <form (ngSubmit)="saveQuestion()" class="form">
+        <div class="form-group">
+          <label>Question Text</label>
+          <textarea [(ngModel)]="formData.questionText" name="questionText" rows="3" required></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Type</label>
+            <select [(ngModel)]="formData.type" name="type">
+              <option *ngFor="let type of questionTypes" [value]="type">{{ type }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Difficulty</label>
+            <select [(ngModel)]="formData.difficulty" name="difficulty">
+              <option *ngFor="let level of difficultyLevels" [value]="level">
+                {{ level }} - {{ getDifficultyLabel(level) }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Explanation</label>
+          <textarea [(ngModel)]="formData.explanationText" name="explanationText" rows="2"></textarea>
+        </div>
+
+        <div class="options-section">
+          <label>Options</label>
+          <div *ngFor="let option of formData.options; let i = index" class="option-input">
+            <input 
+              type="text" 
+              [(ngModel)]="option.optionText" 
+              [name]="'optionText_' + i"
+              placeholder="Option text"
+              required>
+            <label class="checkbox-label">
+              <input type="checkbox" [(ngModel)]="option.isCorrect" [name]="'isCorrect_' + i">
+              Correct
+            </label>
+            <button 
+              *ngIf="formData.options.length > 2"
+              type="button" 
+              (click)="removeOption(i)"
+              class="btn-remove">
+              Remove
+            </button>
+          </div>
+          <button type="button" (click)="addOption()" class="btn-add-option">+ Add Option</button>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-submit">Save</button>
+          <button type="button" (click)="closeForm()" class="btn-cancel">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,92 @@
+<div class="admin-users">
+  <h1>Manage Users</h1>
+
+  <div class="debug-info" *ngIf="debugInfo" style="background: #f0f0f0; padding: 10px; margin: 10px 0; border-left: 4px solid #ff6b6b;">
+    <strong>DEBUG:</strong> {{ debugInfo }}
+  </div>
+
+  <div class="filters-section">
+    <div class="search-box">
+      <input 
+        type="text" 
+        placeholder="Search by name or email..." 
+        [(ngModel)]="searchQuery"
+        (keyup.enter)="applyServerFilters()"
+        class="search-input">
+    </div>
+
+    <div class="role-filter">
+      <select [(ngModel)]="selectedRole" (change)="onRoleFilterChange()" class="filter-select">
+        <option value="">All Roles</option>
+        <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
+      </select>
+    </div>
+
+    <button type="button" (click)="applyServerFilters()" class="search-btn">Search</button>
+  </div>
+
+  <div class="users-table-container">
+    <div class="data-summary" *ngIf="!loading" style="padding: 10px; background: #f9f9f9; margin-bottom: 10px; border: 1px solid #ddd;">
+      <strong>Data Summary:</strong> Total Users: {{ totalUsers }} | Displayed: {{ users.length }} | Current Page: {{ currentPage }} of {{ totalPages }}
+    </div>
+
+    <table class="users-table" *ngIf="!loading">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Verified</th>
+          <th>Joined</th>
+          <th>Last Login</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of users; trackBy: trackByUserId" [class.inactive]="!user.isActive">
+          <td>{{ user.name }}</td>
+          <td>{{ user.email }}</td>
+          <td>
+            <select 
+              #roleSelect
+              [value]="user.role" 
+              (change)="changeUserRole(user, roleSelect.value)"
+              class="role-select">
+              <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
+            </select>
+          </td>
+          <td>
+            <span [class.status-active]="user.isActive" [class.status-inactive]="!user.isActive">
+              {{ user.isActive ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+          <td>
+            <span [class.verified]="user.isEmailVerified" [class.not-verified]="!user.isEmailVerified">
+              {{ user.isEmailVerified ? '✓' : '✗' }}
+            </span>
+          </td>
+          <td>{{ user.createdAt | date:'short' }}</td>
+          <td>{{ user.lastLoginAt ? (user.lastLoginAt | date:'short') : 'Never' }}</td>
+          <td>
+            <button 
+              (click)="toggleUserStatus(user)"
+              [class.btn-deactivate]="user.isActive"
+              [class.btn-activate]="!user.isActive"
+              class="action-btn">
+              {{ user.isActive ? 'Deactivate' : 'Activate' }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div *ngIf="loading" class="loading">Loading users...</div>
+  </div>
+
+  <div class="pagination">
+    <button (click)="previousPage()" [disabled]="currentPage === 1" class="pagination-btn">Previous</button>
+    <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
+    <button (click)="nextPage()" [disabled]="currentPage === totalPages" class="pagination-btn">Next</button>
+  </div>
+</div>

@@ -1,0 +1,52 @@
+<div class="admin-dashboard">
+  <nav class="admin-sidebar">
+    <div class="sidebar-header">
+      <h2>Admin Panel</h2>
+      <p class="user-info">{{ currentUser?.name }}</p>
+    </div>
+    
+    <ul class="menu-list">
+      <li>
+        <a (click)="selectSection('users')" 
+           [class.active]="activeSection === 'users'"
+           class="menu-item">
+          <span class="icon">👥</span>
+          <span>Users</span>
+        </a>
+      </li>
+      <li>
+        <a (click)="selectSection('subjects')" 
+           [class.active]="activeSection === 'subjects'"
+           class="menu-item">
+          <span class="icon">📚</span>
+          <span>Subjects</span>
+        </a>
+      </li>
+      <li>
+        <a (click)="selectSection('topics')" 
+           [class.active]="activeSection === 'topics'"
+           class="menu-item">
+          <span class="icon">📑</span>
+          <span>Topics</span>
+        </a>
+      </li>
+      <li>
+        <a (click)="selectSection('questions')" 
+           [class.active]="activeSection === 'questions'"
+           class="menu-item">
+          <span class="icon">❓</span>
+          <span>Questions</span>
+        </a>
+      </li>
+    </ul>
+
+    <button (click)="logout()" class="logout-btn">Logout</button>
+  </nav>
+
+  <main class="admin-content">
+    <app-admin-users *ngIf="activeSection === 'users'"></app-admin-users>
+    <app-admin-subjects *ngIf="activeSection === 'subjects'"></app-admin-subjects>
+    <app-admin-topics *ngIf="activeSection === 'topics'"></app-admin-topics>
+    <app-admin-questions *ngIf="activeSection === 'questions'"></app-admin-questions>
+  </main>
+</div>

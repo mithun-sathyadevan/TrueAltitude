@@ -303,6 +303,8 @@ public class SubscriptionService : ISubscriptionService
             Email = user.Email,
             AvatarUrl = user.AvatarUrl,
             Provider = user.Provider,
+            Role = user.Role.ToString(),
+            IsActive = user.IsActive,
             IsEmailVerified = user.IsEmailVerified,
             SubscriptionStatus = user.SubscriptionStatus,
             SubscriptionPlanCode = user.SubscriptionPlanCode,

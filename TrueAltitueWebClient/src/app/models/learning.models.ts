@@ -2,12 +2,12 @@ export interface TopicQuestionOption {
   id: string;
   text: string;
   isCorrect: boolean;
-  explanation: string;
 }
 
 export interface TopicQuestion {
   id: string;
   text: string;
+  explanation: string;
   requiresSubscription?: boolean;
   subscriptionLabel?: string;
   options: TopicQuestionOption[];

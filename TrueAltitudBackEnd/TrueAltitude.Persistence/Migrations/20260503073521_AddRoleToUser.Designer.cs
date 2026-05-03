@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TrueAltitude.Persistence.Data;
 
@@ -11,9 +12,11 @@ using TrueAltitude.Persistence.Data;
 namespace TrueAltitude.Persistence.Migrations
 {
     [DbContext(typeof(TrueAltitudeDbContext))]
-    partial class TrueAltitudeDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260503073521_AddRoleToUser")]
+    partial class AddRoleToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -35,12 +38,6 @@ namespace TrueAltitude.Persistence.Migrations
                         .HasMaxLength(120)
                         .HasColumnType("varchar(120)");
 
-                    b.Property<int>("Difficulty")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ExplanationText")
-                        .HasColumnType("longtext");
-
                     b.Property<bool>("RequiresSubscription")
                         .HasColumnType("tinyint(1)");
 
@@ -54,10 +51,6 @@ namespace TrueAltitude.Persistence.Migrations
                         .HasColumnType("varchar(100)");
 
                     b.Property<string>("Text")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Type")
                         .IsRequired()
                         .HasColumnType("longtext");
 

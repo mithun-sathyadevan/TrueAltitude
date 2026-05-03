@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
+using TrueAltitude.API.Security;
 using TrueAltitude.Application.Services;
 using TrueAltitude.Infrastructure.Interfaces;
 using TrueAltitude.Infrastructure.Repositories;
@@ -15,10 +17,17 @@ var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var jwtSecret = jwtSettings["Secret"] ?? throw new InvalidOperationException("JWT Secret is not configured.");
 var jwtIssuer = jwtSettings["Issuer"] ?? throw new InvalidOperationException("JWT Issuer is not configured.");
 var jwtAudience = jwtSettings["Audience"] ?? throw new InvalidOperationException("JWT Audience is not configured.");
+var requestTimeSharedKey = builder.Configuration["SecurityHeader:SharedKey"] ?? throw new InvalidOperationException("SecurityHeader SharedKey is not configured.");
+var requestTimeMaxAgeSeconds = builder.Configuration.GetValue<int?>("SecurityHeader:MaxAgeSeconds") ?? 20;
 var mysqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("MySQL connection string is not configured.");
 
 // ===== Add Services =====
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.DictionaryKeyPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    });
 builder.Services.AddOpenApi();
 
 // ===== Database Context =====
@@ -46,6 +55,13 @@ builder.Services.AddScoped<IAuthService>(provider =>
 );
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<ILearningService, LearningService>();
+builder.Services.AddScoped<IAdminService>(provider =>
+    new AdminService(
+        provider.GetRequiredService<IUserRepository>(),
+        provider.GetRequiredService<ILearningRepository>(),
+        provider.GetRequiredService<ILogger<AdminService>>()
+    )
+);
 
 // ===== Authentication (JWT) =====
 var key = Encoding.ASCII.GetBytes(jwtSecret);
@@ -66,6 +82,48 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtAudience,
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var authHeader = context.Request.Headers.Authorization.ToString();
+            var hasBearer = !string.IsNullOrWhiteSpace(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase);
+
+            if (!hasBearer)
+            {
+                return Task.CompletedTask;
+            }
+
+            var requestTimeHeader = context.Request.Headers[RequestTimeHeaderValidator.HeaderName].ToString();
+            var isValid = RequestTimeHeaderValidator.IsValid(requestTimeHeader, requestTimeSharedKey, requestTimeMaxAgeSeconds);
+
+            if (!isValid)
+            {
+                // Ignore incoming bearer token when request-time header is missing/invalid/expired.
+                context.NoResult();
+            }
+
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = async context =>
+        {
+            var userIdClaim = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                context.Fail("Invalid token subject.");
+                return;
+            }
+
+            var userRepository = context.HttpContext.RequestServices.GetRequiredService<IUserRepository>();
+            var user = await userRepository.GetByIdAsync(userId);
+
+            if (user == null || !user.IsActive)
+            {
+                context.Fail("User account is inactive.");
+            }
+        }
     };
 });
 

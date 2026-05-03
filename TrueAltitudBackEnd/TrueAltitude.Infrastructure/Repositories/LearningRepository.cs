@@ -34,6 +34,8 @@ public class LearningRepository : ILearningRepository
     {
         return await _context.LearningTopics
             .AsNoTracking()
+            .Include(t => t.ParentTopic)
+            .Include(t => t.TopicQuestions)
             .Where(t => t.SubjectId == subjectId)
             .OrderBy(t => t.SortOrder)
             .ThenBy(t => t.Title)
@@ -162,5 +164,168 @@ public class LearningRepository : ILearningRepository
         Console.WriteLine($"[GetRandomQuestions] Returning {questions.Count} full questions with options");
 
         return questions;
+    }
+
+    // Additional methods for admin operations
+    public async Task<LearningSubject?> GetSubjectByIdAsync(int subjectId)
+    {
+        return await _context.LearningSubjects
+            .FirstOrDefaultAsync(s => s.Id == subjectId);
+    }
+
+    public async Task<int> GetTopicCountBySubjectIdAsync(int subjectId)
+    {
+        return await _context.LearningTopics
+            .CountAsync(t => t.SubjectId == subjectId);
+    }
+
+    public async Task<LearningTopic?> GetTopicByIdAsync(int topicId)
+    {
+        return await _context.LearningTopics
+            .AsNoTracking()
+            .Include(t => t.ParentTopic)
+            .Include(t => t.TopicQuestions)
+            .FirstOrDefaultAsync(t => t.Id == topicId);
+    }
+
+    public async Task<LearningQuestion?> GetQuestionByIdWithOptionsAsync(int questionId)
+    {
+        return await _context.LearningQuestions
+            .AsNoTracking()
+            .Include(q => q.Options)
+            .Include(q => q.TopicQuestions)
+                .ThenInclude(tq => tq.Topic)
+                    .ThenInclude(t => t.ParentTopic)
+            .FirstOrDefaultAsync(q => q.Id == questionId);
+    }
+
+    public async Task<List<LearningQuestion>> GetAllQuestionsAsync()
+    {
+        return await _context.LearningQuestions
+            .AsNoTracking()
+            .Include(q => q.Options)
+            .Include(q => q.TopicQuestions)
+                .ThenInclude(tq => tq.Topic)
+                    .ThenInclude(t => t.ParentTopic)
+            .ToListAsync();
+    }
+
+    // Create operations
+    public async Task<LearningSubject> CreateSubjectAsync(LearningSubject subject)
+    {
+        _context.LearningSubjects.Add(subject);
+        await _context.SaveChangesAsync();
+        return subject;
+    }
+
+    public async Task<LearningTopic> CreateTopicAsync(LearningTopic topic)
+    {
+        _context.LearningTopics.Add(topic);
+        await _context.SaveChangesAsync();
+        return topic;
+    }
+
+    public async Task<LearningQuestion> CreateQuestionAsync(LearningQuestion question)
+    {
+        _context.LearningQuestions.Add(question);
+        await _context.SaveChangesAsync();
+        return question;
+    }
+
+    public async Task<LearningQuestionOption> CreateQuestionOptionAsync(LearningQuestionOption option)
+    {
+        _context.LearningQuestionOptions.Add(option);
+        await _context.SaveChangesAsync();
+        return option;
+    }
+
+    public async Task<LearningTopicQuestion> CreateTopicQuestionAsync(LearningTopicQuestion topicQuestion)
+    {
+        _context.LearningTopicQuestions.Add(topicQuestion);
+        await _context.SaveChangesAsync();
+        return topicQuestion;
+    }
+
+    // Update operations
+    public async Task<LearningSubject> UpdateSubjectAsync(LearningSubject subject)
+    {
+        _context.LearningSubjects.Update(subject);
+        await _context.SaveChangesAsync();
+        return subject;
+    }
+
+    public async Task<LearningTopic> UpdateTopicAsync(LearningTopic topic)
+    {
+        _context.LearningTopics.Update(topic);
+        await _context.SaveChangesAsync();
+        return topic;
+    }
+
+    public async Task<LearningQuestion> UpdateQuestionAsync(LearningQuestion question)
+    {
+        _context.LearningQuestions.Update(question);
+        await _context.SaveChangesAsync();
+        return question;
+    }
+
+    // Delete operations
+    public async Task<bool> DeleteSubjectAsync(int subjectId)
+    {
+        var subject = await _context.LearningSubjects.FindAsync(subjectId);
+        if (subject == null)
+            return false;
+
+        _context.LearningSubjects.Remove(subject);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeleteTopicAsync(int topicId)
+    {
+        var topic = await _context.LearningTopics.FindAsync(topicId);
+        if (topic == null)
+            return false;
+
+        _context.LearningTopics.Remove(topic);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeleteQuestionAsync(int questionId)
+    {
+        var question = await _context.LearningQuestions.FindAsync(questionId);
+        if (question == null)
+            return false;
+
+        _context.LearningQuestions.Remove(question);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeleteQuestionOptionsAsync(int questionId)
+    {
+        var options = await _context.LearningQuestionOptions
+            .Where(o => o.QuestionId == questionId)
+            .ToListAsync();
+
+        if (options.Count == 0)
+            return true;
+
+        _context.LearningQuestionOptions.RemoveRange(options);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeleteTopicQuestionAsync(int topicId, int questionId)
+    {
+        var link = await _context.LearningTopicQuestions
+            .FirstOrDefaultAsync(tq => tq.TopicId == topicId && tq.QuestionId == questionId);
+
+        if (link == null)
+            return false;
+
+        _context.LearningTopicQuestions.Remove(link);
+        await _context.SaveChangesAsync();
+        return true;
     }
 }

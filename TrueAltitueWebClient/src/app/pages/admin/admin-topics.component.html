@@ -1,0 +1,93 @@
+<div class="admin-topics">
+  <h1>Manage Topics</h1>
+
+  <div class="subject-selector">
+    <label>Select Subject:</label>
+    <select [(ngModel)]="selectedSubjectId" (change)="onSubjectChange()">
+      <option [ngValue]="null">-- Choose a subject --</option>
+      <option *ngFor="let subject of subjects" [ngValue]="subject.id">{{ subject.title }}</option>
+    </select>
+  </div>
+
+  <div *ngIf="selectedSubjectId" class="topics-section">
+    <div class="header-section">
+      <h2>Topics in Selected Subject</h2>
+      <button (click)="openCreateForm()" class="btn-primary">+ Add Topic</button>
+    </div>
+
+    <div *ngIf="!loading" class="topics-list">
+      <div *ngFor="let topic of filteredTopics" class="topic-card">
+        <div class="topic-info">
+          <h3>{{ topic.title }}</h3>
+          <p class="code">Code: {{ topic.code }}</p>
+          <p *ngIf="topic.parentTopicTitle" class="parent-topic">Parent Topic: {{ topic.parentTopicTitle }}</p>
+          <p class="description">{{ topic.description }}</p>
+          <p class="question-count">📝 {{ topic.questionCount || 0 }} Questions</p>
+          <p class="child-count">↳ {{ getChildCount(topic.id) }} Subtopics</p>
+        </div>
+        <div class="topic-actions">
+          <button (click)="openEditForm(topic)" class="btn-edit">Edit</button>
+          <button (click)="deleteTopic(topic.id)" class="btn-delete">Delete</button>
+        </div>
+      </div>
+
+      <div *ngIf="filteredTopics.length === 0" class="no-data">
+        No topics found. Create one!
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="loading">Loading topics...</div>
+  </div>
+
+  <!-- Form Modal -->
+  <div *ngIf="showForm" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>{{ formMode === 'create' ? 'Create Topic' : 'Edit Topic' }}</h2>
+        <button (click)="closeForm()" class="close-btn">×</button>
+      </div>
+
+      <form (ngSubmit)="saveTopic()" class="form">
+        <div class="form-group">
+          <label>Subject</label>
+          <select [(ngModel)]="formData.subjectId" name="subjectId" (ngModelChange)="onFormSubjectChange()" required>
+            <option *ngFor="let subject of subjects" [ngValue]="subject.id">{{ subject.title }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Parent Topic</label>
+          <select [(ngModel)]="formData.parentTopicId" name="parentTopicId">
+            <option [ngValue]="null">No parent topic</option>
+            <option *ngFor="let topic of availableParentTopics" [ngValue]="topic.id">{{ topic.title }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Code</label>
+          <input type="text" [(ngModel)]="formData.code" name="code" required>
+        </div>
+
+        <div class="form-group">
+          <label>Title</label>
+          <input type="text" [(ngModel)]="formData.title" name="title" required>
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea [(ngModel)]="formData.description" name="description" rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Sort Order</label>
+          <input type="number" [(ngModel)]="formData.sortOrder" name="sortOrder">
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-submit">Save</button>
+          <button type="button" (click)="closeForm()" class="btn-cancel">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

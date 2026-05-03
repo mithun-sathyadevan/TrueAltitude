@@ -44,7 +44,7 @@
             @if (getSelectedOption(question); as selectedOption) {
               <div class="result" [class.pass]="selectedOption.isCorrect" [class.fail]="!selectedOption.isCorrect">
                 <strong>{{ selectedOption.isCorrect ? 'Pass' : 'Fail' }}</strong>
-                <p>{{ selectedOption.explanation }}</p>
+                <p>{{ getQuestionExplanation(question) }}</p>
               </div>
             }
           }

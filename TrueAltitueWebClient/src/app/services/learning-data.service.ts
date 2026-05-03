@@ -34,10 +34,6 @@ export class LearningDataService {
   }
 
   async getSubjectById(subjectId: string): Promise<TopicNode | undefined> {
-    if (this.subjectDetailCache.has(subjectId)) {
-      return this.deepClone(this.subjectDetailCache.get(subjectId)!);
-    }
-
     const subject = await this.getWithRetry<TopicNode>(`${this.apiUrl}/subjects/${encodeURIComponent(subjectId)}`);
     if (!subject) {
       return undefined;
@@ -159,7 +155,14 @@ export class LearningDataService {
     return {
       ...topic,
       children: (topic.children || []).map((child) => this.normalizeTopic(child)),
-      questions: topic.questions || [],
+      questions: (topic.questions || []).map((question) => {
+        const rawQuestion = question as any;
+        return {
+          ...question,
+          explanation: question.explanation || rawQuestion.explanationText || '',
+          options: question.options || [],
+        };
+      }),
       videos: topic.videos || [],
       blogs: topic.blogs || [],
     };

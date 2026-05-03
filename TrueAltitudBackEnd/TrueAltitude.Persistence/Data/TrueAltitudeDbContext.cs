@@ -47,6 +47,9 @@ public class TrueAltitudeDbContext : DbContext
                 .HasMaxLength(50)
                 .HasDefaultValue("local");
 
+            entity.Property(e => e.Role)
+                .HasConversion<int>();
+
             entity.Property(e => e.CreatedAt)
                 .HasColumnType("datetime(6)")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");

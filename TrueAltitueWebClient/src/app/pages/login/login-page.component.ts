@@ -43,6 +43,7 @@ export class LoginPageComponent implements AfterViewInit, OnInit {
   protected email = '';
   protected password = '';
   protected errorMessage = '';
+  protected showDeactivatedAccountMessage = false;
   private googleInitialized = false;
 
   @ViewChild('googleButtonContainer')
@@ -73,6 +74,7 @@ export class LoginPageComponent implements AfterViewInit, OnInit {
   protected async onLogin(event: Event): Promise<void> {
     event.preventDefault();
     this.errorMessage = '';
+    this.showDeactivatedAccountMessage = false;
 
     if (!this.email.trim() || !this.password) {
       this.errorMessage = 'Email and password are required.';
@@ -92,7 +94,10 @@ export class LoginPageComponent implements AfterViewInit, OnInit {
         });
         return;
       }
-      this.errorMessage = result.message || 'Login failed.';
+
+      const message = result.message || 'Login failed.';
+      this.showDeactivatedAccountMessage = message.toLowerCase().includes('deactivated');
+      this.errorMessage = message;
       return;
     }
 

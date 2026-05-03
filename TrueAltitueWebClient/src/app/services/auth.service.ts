@@ -8,6 +8,7 @@ export interface AuthUser {
   email?: string;
   avatarUrl?: string;
   provider?: 'local' | 'google';
+  role?: string;
   subscriptionStatus?: 'none' | 'active' | 'expired';
   subscriptionPlanCode?: string;
   subscriptionPlanName?: string;
@@ -77,8 +78,12 @@ export class AuthService {
       }
 
       return response;
-    } catch {
-      return { success: false, message: 'Login failed. Please check server and credentials.' };
+    } catch (error: any) {
+      const backendMessage = error?.error?.message || error?.error?.Message;
+      return {
+        success: false,
+        message: backendMessage || 'Login failed. Please check server and credentials.',
+      };
     }
   }
 

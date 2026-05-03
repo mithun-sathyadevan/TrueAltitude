@@ -1,5 +1,12 @@
 namespace TrueAltitude.Domain.Entities;
 
+public enum UserRole
+{
+    Admin = 0,
+    Manager = 1,
+    Customer = 2
+}
+
 public class User
 {
     public int Id { get; set; }
@@ -8,6 +15,7 @@ public class User
     public string PasswordHash { get; set; } = string.Empty;
     public string? AvatarUrl { get; set; }
     public string Provider { get; set; } = "local"; // local, google, etc.
+    public UserRole Role { get; set; } = UserRole.Customer; // Default role
     public bool IsActive { get; set; } = true;
     public bool IsEmailVerified { get; set; } = false;
     public string? OtpCode { get; set; }

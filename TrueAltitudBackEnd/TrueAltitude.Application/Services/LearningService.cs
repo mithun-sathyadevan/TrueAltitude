@@ -214,6 +214,7 @@ public class LearningService : ILearningService
         {
             Id = question.Code,
             Text = question.Text,
+            Explanation = question.ExplanationText ?? string.Empty,
             RequiresSubscription = question.RequiresSubscription,
             SubscriptionLabel = question.SubscriptionLabel,
             Options = optionsByQuestionId.TryGetValue(question.Id, out var options)
@@ -228,8 +229,7 @@ public class LearningService : ILearningService
         {
             Id = option.Code,
             Text = option.Text,
-            IsCorrect = option.IsCorrect,
-            Explanation = option.Explanation
+            IsCorrect = option.IsCorrect
         };
     }
 }

@@ -1,0 +1,86 @@
+<div class="admin-subjects">
+  <div class="header-section">
+    <h1>Manage Subjects</h1>
+    <button (click)="openCreateForm()" class="btn-primary">+ Add Subject</button>
+  </div>
+
+  <div class="filters-section">
+    <input
+      type="text"
+      placeholder="Search subjects by title, code, or description..."
+      [(ngModel)]="searchQuery"
+      (input)="applyFilters()"
+      class="search-input">
+  </div>
+
+  <div *ngIf="!loading" class="subjects-list">
+    <div *ngFor="let subject of filteredSubjects" class="subject-card">
+      <div class="subject-info">
+        <h3>{{ subject.title }}</h3>
+        <p class="code">Code: {{ subject.code }}</p>
+        <p class="description">{{ subject.description }}</p>
+        <div class="meta">
+          <span class="topics-count">📑 {{ subject.topicCount || 0 }} Topics</span>
+          <span *ngIf="subject.requiresSubscription" class="subscription-label">
+            🔒 {{ subject.subscriptionLabel || 'Premium' }}
+          </span>
+        </div>
+      </div>
+      <div class="subject-actions">
+        <button (click)="openEditForm(subject)" class="btn-edit">Edit</button>
+        <button (click)="deleteSubject(subject.id)" class="btn-delete">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading">Loading subjects...</div>
+
+  <!-- Form Modal -->
+  <div *ngIf="showForm" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>{{ formMode === 'create' ? 'Create Subject' : 'Edit Subject' }}</h2>
+        <button (click)="closeForm()" class="close-btn">×</button>
+      </div>
+
+      <form (ngSubmit)="saveSubject()" class="form">
+        <div class="form-group">
+          <label>Code</label>
+          <input type="text" [(ngModel)]="formData.code" name="code" required>
+        </div>
+
+        <div class="form-group">
+          <label>Title</label>
+          <input type="text" [(ngModel)]="formData.title" name="title" required>
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea [(ngModel)]="formData.description" name="description" rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" [(ngModel)]="formData.requiresSubscription" name="requiresSubscription">
+            Requires Subscription
+          </label>
+        </div>
+
+        <div *ngIf="formData.requiresSubscription" class="form-group">
+          <label>Subscription Label</label>
+          <input type="text" [(ngModel)]="formData.subscriptionLabel" name="subscriptionLabel">
+        </div>
+
+        <div class="form-group">
+          <label>Sort Order</label>
+          <input type="number" [(ngModel)]="formData.sortOrder" name="sortOrder">
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-submit">Save</button>
+          <button type="button" (click)="closeForm()" class="btn-cancel">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

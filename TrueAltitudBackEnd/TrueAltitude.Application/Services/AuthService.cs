@@ -177,6 +177,11 @@ public class AuthService : IAuthService
             return new AuthResponseDto { Success = false, Message = "Invalid email or password." };
         }
 
+        if (!user.IsActive)
+        {
+            return new AuthResponseDto { Success = false, Message = "Your account is deactivated. Please contact support." };
+        }
+
         if (!user.IsEmailVerified)
         {
             // Send a fresh OTP so they can verify immediately
@@ -234,6 +239,11 @@ public class AuthService : IAuthService
         }
         else
         {
+            if (!user.IsActive)
+            {
+                return new AuthResponseDto { Success = false, Message = "Your account is deactivated. Please contact support." };
+            }
+
             user.AvatarUrl = googlePayload.Picture;
             user.Provider = "google";
             user.IsEmailVerified = true;
@@ -279,6 +289,8 @@ public class AuthService : IAuthService
             Email = user.Email,
             AvatarUrl = user.AvatarUrl,
             Provider = user.Provider,
+            Role = user.Role.ToString(),
+            IsActive = user.IsActive,
             IsEmailVerified = user.IsEmailVerified,
             SubscriptionStatus = user.SubscriptionStatus,
             SubscriptionPlanCode = user.SubscriptionPlanCode,

@@ -24,6 +24,7 @@ public class LearningQuestionDto
 {
     public string Id { get; set; } = string.Empty;
     public string Text { get; set; } = string.Empty;
+    public string Explanation { get; set; } = string.Empty;
     public bool RequiresSubscription { get; set; }
     public string? SubscriptionLabel { get; set; }
     public List<LearningQuestionOptionDto> Options { get; set; } = new();
@@ -34,7 +35,6 @@ public class LearningQuestionOptionDto
     public string Id { get; set; } = string.Empty;
     public string Text { get; set; } = string.Empty;
     public bool IsCorrect { get; set; }
-    public string Explanation { get; set; } = string.Empty;
 }
 
 public class ExamQuestionDto
