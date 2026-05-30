@@ -6,6 +6,8 @@ import { AdminUsersComponent } from './admin-users.component';
 import { AdminSubjectsComponent } from './admin-subjects.component';
 import { AdminTopicsComponent } from './admin-topics.component';
 import { AdminQuestionsComponent } from './admin-questions.component';
+import { AdminSubscriptionsComponent } from './admin-subscriptions.component';
+import { AdminPlansComponent } from './admin-plans.component';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -24,6 +26,8 @@ import { AdminQuestionsComponent } from './admin-questions.component';
 export class AdminDashboardComponent implements OnInit, OnDestroy {
   currentUser: any;
   activeSection: string = 'users';
+  readonly subscriptionsView = AdminSubscriptionsComponent;
+  readonly plansView = AdminPlansComponent;
 
   constructor(private authService: AuthService, private router: Router) {
     const user = this.authService.currentUser();

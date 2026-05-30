@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
 import { adminGuard } from './guards/admin.guard';
+import { subscriptionPageGuard } from './guards/subscription-page.guard';
 import { HomeModulesPageComponent } from './pages/home-modules/home-modules-page.component';
 import { LearningPageComponent } from './pages/learning/learning-page.component';
 import { LearningShellPageComponent } from './pages/learning-shell/learning-shell-page.component';
@@ -19,7 +20,7 @@ export const routes: Routes = [
 	{ path: 'verify-email', component: VerifyEmailPageComponent },
 	{ path: 'admin', component: AdminDashboardComponent, canActivate: [adminGuard] },
 	{ path: 'subscription', redirectTo: 'subscriptions', pathMatch: 'full' },
-	{ path: 'subscriptions', component: SubscriptionPageComponent, canActivate: [authGuard] },
+	{ path: 'subscriptions', component: SubscriptionPageComponent, canActivate: [authGuard, subscriptionPageGuard] },
 	{
 		path: 'learning',
 		component: LearningShellPageComponent,

@@ -4,6 +4,99 @@
     <button (click)="openCreateForm()" class="btn-primary">+ Add Question</button>
   </div>
 
+  <div class="bulk-upload-panel workbook-panel">
+    <h3>Workbook Upload (File Name = Subject, Sheets = Topics)</h3>
+    <p>Upload one workbook to auto-create/find a subject from file name and import each sheet into a same-name topic.</p>
+
+    <div class="bulk-upload-controls workbook-controls">
+      <input type="file" accept=".xlsx,.xls" (change)="onWorkbookExcelFileSelected($event)">
+      <button type="button" class="btn-primary" (click)="uploadWorkbookQuestions()" [disabled]="workbookUploading">
+        {{ workbookUploading ? 'Uploading Workbook...' : 'Upload Workbook' }}
+      </button>
+    </div>
+
+    <small class="bulk-hint">
+      Mapping: workbook file name -> subject title, each sheet name -> topic title. Uses same row header rules as single-topic import.
+    </small>
+
+    <div *ngIf="workbookUploadResult" class="bulk-result workbook-result">
+      <div><strong>Subject:</strong> {{ workbookUploadResult.subjectTitle }} ({{ workbookUploadResult.subjectCreated ? 'created' : 'existing' }})</div>
+      <div><strong>Total Rows:</strong> {{ workbookUploadResult.totalRows }}</div>
+      <div><strong>Processed:</strong> {{ workbookUploadResult.processedRows }}</div>
+      <div><strong>Created:</strong> {{ workbookUploadResult.createdQuestions }}</div>
+      <div><strong>Reused:</strong> {{ workbookUploadResult.reusedQuestions }}</div>
+      <div><strong>Linked:</strong> {{ workbookUploadResult.linkedToTopic }}</div>
+      <div><strong>Already Linked:</strong> {{ workbookUploadResult.alreadyLinked }}</div>
+      <div><strong>Skipped:</strong> {{ workbookUploadResult.skippedRows }}</div>
+
+      <div class="sheet-results" *ngIf="workbookUploadResult.topics.length">
+        <strong>Sheet Results:</strong>
+        <div class="sheet-result-row" *ngFor="let topicResult of workbookUploadResult.topics">
+          <div class="sheet-title">{{ topicResult.topicTitle }} ({{ topicResult.topicCreated ? 'created' : 'existing' }})</div>
+          <div class="sheet-stats">
+            Rows {{ topicResult.totalRows }} | Processed {{ topicResult.processedRows }} | Linked {{ topicResult.linkedToTopic }} | Skipped {{ topicResult.skippedRows }}
+          </div>
+          <ul class="sheet-errors" *ngIf="topicResult.errors?.length">
+            <li *ngFor="let err of topicResult.errors">{{ err }}</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bulk-upload-panel">
+    <h3>Bulk Upload Questions From Excel</h3>
+    <p>Select a topic, upload Excel, and questions will be inserted into master list (dedupe) then linked to topic.</p>
+
+    <div class="bulk-upload-controls">
+      <select
+        [ngModel]="bulkUploadSubjectId"
+        (ngModelChange)="onBulkUploadSubjectChange($event)"
+        [ngModelOptions]="{ standalone: true }"
+      >
+        <option [ngValue]="null">Select subject</option>
+        <option *ngFor="let subject of subjects" [ngValue]="subject.id">{{ subject.title }}</option>
+      </select>
+
+      <select
+        [(ngModel)]="bulkUploadTopicId"
+        [ngModelOptions]="{ standalone: true }"
+      >
+        <option [ngValue]="null">Select topic</option>
+        <option *ngFor="let topic of (bulkUploadSubjectId ? topicsBySubjectId[bulkUploadSubjectId] : []) || []" [ngValue]="topic.id">
+          {{ topic.parentTopicTitle ? topic.parentTopicTitle + ' / ' : '' }}{{ topic.title }}
+        </option>
+      </select>
+
+      <input type="file" accept=".xlsx,.xls" (change)="onBulkExcelFileSelected($event)">
+      <button type="button" class="btn-primary" (click)="uploadBulkQuestions()" [disabled]="bulkUploading">
+        {{ bulkUploading ? 'Uploading...' : 'Bulk Upload' }}
+      </button>
+    </div>
+
+    <small class="bulk-hint">
+      Expected headers (case-insensitive): QuestionText/Question, Option1..Option4, CorrectOption/CorrectAnswer.
+      Optional: Type, Difficulty, Explanation, AnswerImageUrl.
+    </small>
+
+    <div *ngIf="bulkUploadResult" class="bulk-result">
+      <div><strong>Total Rows:</strong> {{ bulkUploadResult.totalRows }}</div>
+      <div><strong>Processed:</strong> {{ bulkUploadResult.processedRows }}</div>
+      <div><strong>Created:</strong> {{ bulkUploadResult.createdQuestions }}</div>
+      <div><strong>Reused:</strong> {{ bulkUploadResult.reusedQuestions }}</div>
+      <div><strong>Linked:</strong> {{ bulkUploadResult.linkedToTopic }}</div>
+      <div><strong>Already Linked:</strong> {{ bulkUploadResult.alreadyLinked }}</div>
+      <div><strong>Skipped:</strong> {{ bulkUploadResult.skippedRows }}</div>
+
+      <div *ngIf="bulkUploadResult.errors?.length" class="bulk-errors">
+        <strong>Row Errors:</strong>
+        <ul>
+          <li *ngFor="let err of bulkUploadResult.errors">{{ err }}</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
   <div class="filters-section">
     <input
       type="text"
@@ -31,6 +124,9 @@
         </div>
         <div *ngIf="question.explanationText" class="explanation">
           <strong>Explanation:</strong> {{ question.explanationText }}
+        </div>
+        <div *ngIf="question.answerImageUrl" class="explanation">
+          <div *ngIf="question.answerImageUrl"><strong>Answer Image:</strong> {{ question.answerImageUrl }}</div>
         </div>
         <div class="options-preview">
           <div *ngFor="let option of question.options" class="option-item">
@@ -136,6 +232,17 @@
         <div class="form-group">
           <label>Explanation</label>
           <textarea [(ngModel)]="formData.explanationText" name="explanationText" rows="2"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Question Image URL (shown on reveal)</label>
+          <input type="text" [(ngModel)]="formData.answerImageUrl" name="answerImageUrl" placeholder="https://...">
+          <div class="option-input">
+            <input type="file" accept="image/*" (change)="onAnswerImageFileSelected($event)">
+            <button type="button" class="btn-add-option" (click)="uploadAnswerImage()" [disabled]="uploadingAnswerImage">
+              {{ uploadingAnswerImage ? 'Uploading...' : 'Upload Question Image' }}
+            </button>
+          </div>
         </div>
 
         <div class="options-section">

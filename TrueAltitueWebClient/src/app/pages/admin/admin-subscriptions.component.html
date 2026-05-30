@@ -1,0 +1,81 @@
+<div class="admin-subscriptions">
+  <h1>Subscription Purchases</h1>
+
+  <div class="filters-section">
+    <div class="search-box">
+      <input
+        type="text"
+        placeholder="Search by user, email, plan, order id..."
+        [(ngModel)]="searchQuery"
+        (keyup.enter)="applyFilters()"
+        class="search-input"
+      >
+    </div>
+
+    <div class="status-filter">
+      <select [(ngModel)]="selectedStatus" (change)="onStatusFilterChange()" class="filter-select">
+        <option value="">All Statuses</option>
+        <option *ngFor="let status of statuses" [value]="status">{{ status | titlecase }}</option>
+      </select>
+    </div>
+
+    <button type="button" (click)="applyFilters()" class="search-btn">Search</button>
+  </div>
+
+  <div class="purchases-table-container">
+    <table class="purchases-table" *ngIf="!loading">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Plan</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Failed Reason</th>
+          <th>Order Id</th>
+          <th>Payment Id</th>
+          <th>Created</th>
+          <th>Paid</th>
+          <th>Expires</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let purchase of purchases; trackBy: trackByPurchaseId">
+          <td>
+            <div class="cell-main">{{ purchase.userName }}</div>
+            <div class="cell-sub">{{ purchase.userEmail }}</div>
+          </td>
+          <td>
+            <div class="cell-main">{{ purchase.planName }}</div>
+            <div class="cell-sub">{{ purchase.planCode }}</div>
+          </td>
+          <td>{{ paymentAmountDisplay(purchase) }}</td>
+          <td>
+            <span
+              class="status-chip"
+              [class.paid]="purchase.paymentStatus === 'paid'"
+              [class.pending]="purchase.paymentStatus === 'pending'"
+              [class.failed]="purchase.paymentStatus === 'failed'"
+            >
+              {{ purchase.paymentStatus | titlecase }}
+            </span>
+          </td>
+          <td>{{ purchase.failedReason || '-' }}</td>
+          <td>{{ purchase.providerOrderId || '-' }}</td>
+          <td>{{ purchase.providerPaymentId || '-' }}</td>
+          <td>{{ purchase.createdAt | date:'short' }}</td>
+          <td>{{ purchase.paidAt ? (purchase.paidAt | date:'short') : '-' }}</td>
+          <td>{{ purchase.subscriptionEndsAt ? (purchase.subscriptionEndsAt | date:'short') : '-' }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div *ngIf="loading" class="loading">Loading subscription purchases...</div>
+    <div *ngIf="!loading && purchases.length === 0" class="loading">No subscription purchases found.</div>
+  </div>
+
+  <div class="pagination">
+    <button (click)="previousPage()" [disabled]="currentPage === 1" class="pagination-btn">Previous</button>
+    <span class="page-info">Page {{ currentPage }} of {{ totalPages }} ({{ totalPurchases }} total)</span>
+    <button (click)="nextPage()" [disabled]="currentPage === totalPages" class="pagination-btn">Next</button>
+  </div>
+</div>

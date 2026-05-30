@@ -9,6 +9,7 @@ public interface IAdminService
 {
     // User Management
     Task<PaginatedResponse<AdminUserDto>> GetAllUsersAsync(int page = 1, int pageSize = 20, string? searchQuery = null, string? role = null);
+    Task<PaginatedResponse<AdminSubscriptionPurchaseDto>> GetSubscriptionPurchasesAsync(int page = 1, int pageSize = 20, string? searchQuery = null, string? status = null);
     Task<AdminUserDto?> GetUserByIdAsync(int userId);
     Task<bool> UpdateUserRoleAsync(int userId, string role);
     Task<bool> ToggleUserStatusAsync(int userId, bool isActive);
@@ -33,6 +34,7 @@ public interface IAdminService
     Task<bool> DeleteQuestionAsync(int questionId);
     Task<QuestionResponseDto?> GetQuestionByIdAsync(int questionId);
     Task<PaginatedResponse<QuestionResponseDto>> GetAllQuestionsAsync(int page = 1, int pageSize = 20, string? searchQuery = null);
+    Task<BulkQuestionImportResultDto> BulkImportQuestionsToTopicAsync(int topicId, List<BulkQuestionImportItemDto> rows);
 
     // Link Question to Topic
     Task<bool> LinkQuestionToTopicAsync(int topicId, int questionId, int sortOrder);
@@ -42,15 +44,18 @@ public interface IAdminService
 public class AdminService : IAdminService
 {
     private readonly IUserRepository _userRepository;
+    private readonly ISubscriptionPurchaseRepository _purchaseRepository;
     private readonly ILearningRepository _learningRepository;
     private readonly ILogger<AdminService> _logger;
 
     public AdminService(
         IUserRepository userRepository,
+        ISubscriptionPurchaseRepository purchaseRepository,
         ILearningRepository learningRepository,
         ILogger<AdminService> logger)
     {
         _userRepository = userRepository;
+        _purchaseRepository = purchaseRepository;
         _learningRepository = learningRepository;
         _logger = logger;
     }
@@ -113,6 +118,27 @@ public class AdminService : IAdminService
         {
             _logger.LogError(ex, "Error fetching user {UserId}", userId);
             return null;
+        }
+    }
+
+    public async Task<PaginatedResponse<AdminSubscriptionPurchaseDto>> GetSubscriptionPurchasesAsync(int page = 1, int pageSize = 20, string? searchQuery = null, string? status = null)
+    {
+        try
+        {
+            var (purchases, total) = await _purchaseRepository.GetPagedWithUserAsync(page, pageSize, searchQuery, status);
+
+            return new PaginatedResponse<AdminSubscriptionPurchaseDto>
+            {
+                Data = purchases.Select(MapToAdminSubscriptionPurchaseDto).ToList(),
+                Total = total,
+                PageSize = pageSize,
+                CurrentPage = page
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching subscription purchases");
+            return new PaginatedResponse<AdminSubscriptionPurchaseDto>();
         }
     }
 
@@ -388,6 +414,7 @@ public class AdminService : IAdminService
             {
                 Text = dto.QuestionText,
                 Type = dto.Type,
+                AnswerImageUrl = dto.AnswerImageUrl,
                 ExplanationText = dto.ExplanationText,
                 Difficulty = dto.Difficulty,
                 Code = Guid.NewGuid().ToString().Substring(0, 8)
@@ -429,6 +456,7 @@ public class AdminService : IAdminService
 
             question.Text = dto.QuestionText;
             question.Type = dto.Type;
+            question.AnswerImageUrl = dto.AnswerImageUrl;
             question.ExplanationText = dto.ExplanationText;
             question.Difficulty = dto.Difficulty;
 
@@ -525,6 +553,108 @@ public class AdminService : IAdminService
         }
     }
 
+    public async Task<BulkQuestionImportResultDto> BulkImportQuestionsToTopicAsync(int topicId, List<BulkQuestionImportItemDto> rows)
+    {
+        var result = new BulkQuestionImportResultDto
+        {
+            TotalRows = rows.Count
+        };
+
+        var topic = await _learningRepository.GetTopicByIdAsync(topicId);
+        if (topic == null)
+        {
+            result.Errors.Add("Topic not found.");
+            result.SkippedRows = rows.Count;
+            return result;
+        }
+
+        var existingQuestions = await _learningRepository.GetAllQuestionsAsync();
+        var questionMap = existingQuestions
+            .Where(q => !string.IsNullOrWhiteSpace(q.Text))
+            .ToDictionary(q => BuildQuestionDedupKey(q.Text, q.Type, q.Options.Select(o => o.Text).ToList()), q => q);
+
+        var nextSortOrder = (topic.TopicQuestions?.Select(tq => tq.SortOrder).DefaultIfEmpty(0).Max() ?? 0) + 1;
+
+        foreach (var row in rows)
+        {
+            if (string.IsNullOrWhiteSpace(row.QuestionText))
+            {
+                result.SkippedRows++;
+                result.Errors.Add($"Row {row.RowNumber}: Question text is empty.");
+                continue;
+            }
+
+            if (row.Options.Count < 2)
+            {
+                result.SkippedRows++;
+                result.Errors.Add($"Row {row.RowNumber}: At least 2 options are required.");
+                continue;
+            }
+
+            var correctOptionIndex = ResolveCorrectOptionIndex(row.CorrectOption, row.Options);
+            if (correctOptionIndex < 0)
+            {
+                result.SkippedRows++;
+                result.Errors.Add($"Row {row.RowNumber}: Could not determine correct option '{row.CorrectOption}'.");
+                continue;
+            }
+
+            var dedupKey = BuildQuestionDedupKey(row.QuestionText, row.Type, row.Options);
+            if (!questionMap.TryGetValue(dedupKey, out var question))
+            {
+                question = await _learningRepository.CreateQuestionAsync(new LearningQuestion
+                {
+                    Code = Guid.NewGuid().ToString()[..8],
+                    Text = row.QuestionText.Trim(),
+                    Type = string.IsNullOrWhiteSpace(row.Type) ? "multiple_choice" : row.Type.Trim().ToLowerInvariant(),
+                    Difficulty = Math.Clamp(row.Difficulty, 1, 5),
+                    ExplanationText = string.IsNullOrWhiteSpace(row.ExplanationText) ? null : row.ExplanationText.Trim(),
+                    AnswerImageUrl = string.IsNullOrWhiteSpace(row.AnswerImageUrl) ? null : row.AnswerImageUrl.Trim()
+                });
+
+                for (var optionIndex = 0; optionIndex < row.Options.Count; optionIndex++)
+                {
+                    await _learningRepository.CreateQuestionOptionAsync(new LearningQuestionOption
+                    {
+                        QuestionId = question.Id,
+                        Code = Guid.NewGuid().ToString()[..8],
+                        Text = row.Options[optionIndex],
+                        IsCorrect = optionIndex == correctOptionIndex,
+                        Explanation = string.Empty,
+                        SortOrder = optionIndex
+                    });
+                }
+
+                question = await _learningRepository.GetQuestionByIdWithOptionsAsync(question.Id) ?? question;
+                questionMap[dedupKey] = question;
+                result.CreatedQuestions++;
+            }
+            else
+            {
+                result.ReusedQuestions++;
+            }
+
+            if (question.TopicQuestions.Any(tq => tq.TopicId == topicId))
+            {
+                result.AlreadyLinked++;
+            }
+            else
+            {
+                await _learningRepository.CreateTopicQuestionAsync(new LearningTopicQuestion
+                {
+                    TopicId = topicId,
+                    QuestionId = question.Id,
+                    SortOrder = nextSortOrder++
+                });
+                result.LinkedToTopic++;
+            }
+
+            result.ProcessedRows++;
+        }
+
+        return result;
+    }
+
     #endregion
 
     #region Link Question to Topic
@@ -611,6 +741,29 @@ public class AdminService : IAdminService
         };
     }
 
+    private static AdminSubscriptionPurchaseDto MapToAdminSubscriptionPurchaseDto(SubscriptionPurchase purchase)
+    {
+        return new AdminSubscriptionPurchaseDto
+        {
+            PurchaseId = purchase.Id,
+            UserId = purchase.UserId,
+            UserName = purchase.User?.Name ?? string.Empty,
+            UserEmail = purchase.User?.Email ?? string.Empty,
+            PlanCode = purchase.PlanCode,
+            PlanName = purchase.PlanName,
+            PaymentStatus = purchase.Status,
+            FailedReason = purchase.FailureReason,
+            AmountInPaise = purchase.AmountInPaise,
+            Currency = purchase.Currency,
+            PaymentProvider = purchase.PaymentProvider,
+            ProviderOrderId = purchase.ProviderOrderId,
+            ProviderPaymentId = purchase.ProviderPaymentId,
+            CreatedAt = purchase.CreatedAt,
+            PaidAt = purchase.PaidAt,
+            SubscriptionEndsAt = purchase.SubscriptionEndsAt
+        };
+    }
+
     private TopicResponseDto MapToTopicResponseDto(LearningTopic topic, int questionCount = 0)
     {
         return new TopicResponseDto
@@ -634,6 +787,7 @@ public class AdminService : IAdminService
             Id = question.Id,
             QuestionText = question.Text,
             Type = question.Type,
+            AnswerImageUrl = question.AnswerImageUrl,
             ExplanationText = question.ExplanationText,
             Difficulty = question.Difficulty,
             Options = question.Options?.Select(o => new QuestionOptionDto
@@ -654,6 +808,60 @@ public class AdminService : IAdminService
                     SortOrder = tq.SortOrder
                 }).ToList() ?? new List<QuestionLinkedTopicDto>()
         };
+    }
+
+    private static string BuildQuestionDedupKey(string questionText, string? type, List<string> options)
+    {
+        var normalizedText = NormalizeForDedup(questionText);
+        var normalizedType = NormalizeForDedup(type ?? "multiple_choice");
+        var normalizedOptions = options
+            .Where(o => !string.IsNullOrWhiteSpace(o))
+            .Select(NormalizeForDedup)
+            .OrderBy(o => o)
+            .ToList();
+
+        return $"{normalizedType}::{normalizedText}::{string.Join("|", normalizedOptions)}";
+    }
+
+    private static string NormalizeForDedup(string value)
+    {
+        return string.Join(' ', value
+            .Trim()
+            .ToLowerInvariant()
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries));
+    }
+
+    private static int ResolveCorrectOptionIndex(string? correctOption, List<string> options)
+    {
+        if (string.IsNullOrWhiteSpace(correctOption))
+        {
+            return -1;
+        }
+
+        var normalized = correctOption.Trim();
+        if (int.TryParse(normalized, out var oneBased) && oneBased >= 1 && oneBased <= options.Count)
+        {
+            return oneBased - 1;
+        }
+
+        if (normalized.Length == 1 && char.IsLetter(normalized[0]))
+        {
+            var letterIndex = char.ToUpperInvariant(normalized[0]) - 'A';
+            if (letterIndex >= 0 && letterIndex < options.Count)
+            {
+                return letterIndex;
+            }
+        }
+
+        for (var optionIndex = 0; optionIndex < options.Count; optionIndex++)
+        {
+            if (string.Equals(options[optionIndex].Trim(), normalized, StringComparison.OrdinalIgnoreCase))
+            {
+                return optionIndex;
+            }
+        }
+
+        return -1;
     }
 
     #endregion

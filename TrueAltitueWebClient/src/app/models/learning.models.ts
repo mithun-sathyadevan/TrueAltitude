@@ -7,6 +7,7 @@ export interface TopicQuestionOption {
 export interface TopicQuestion {
   id: string;
   text: string;
+  answerImageUrl?: string;
   explanation: string;
   requiresSubscription?: boolean;
   subscriptionLabel?: string;
@@ -32,6 +33,7 @@ export interface TopicNode {
   id: string;
   title: string;
   description: string;
+  questionCount?: number;
   requiresSubscription?: boolean;
   subscriptionLabel?: string;
   children?: TopicNode[];
@@ -58,6 +60,7 @@ export interface ExamEvaluationItem {
   correctOptionId: string;
   correctOptionText: string;
   explanation: string;
+  answerImageUrl?: string;
 }
 
 export interface ExamEvaluationResponse {

@@ -9,6 +9,7 @@ import { VideoCourseComponent } from '../../components/video-course/video-course
 import { TopicNode } from '../../models/learning.models';
 import { LearningDataService } from '../../services/learning-data.service';
 import { SubscriptionAccessService } from '../../services/subscription-access.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-learning-page',
@@ -22,7 +23,12 @@ export class LearningPageComponent {
   protected selectedTopic: TopicNode | null = null;
   protected isTopicPickerOpen = false;
   protected loading = true;
+  protected loadingTopicQuestions = false;
+  protected topicQuestionLoadError = '';
   protected loadError = '';
+  protected readonly showLearningResources = environment.features.showLearningVideoCourse || environment.features.showLearningChapterBlogs;
+  protected readonly showLearningVideoCourse = environment.features.showLearningVideoCourse;
+  protected readonly showLearningChapterBlogs = environment.features.showLearningChapterBlogs;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -58,7 +64,8 @@ export class LearningPageComponent {
       }
 
       this.selectedSubject = subject;
-      this.selectedTopic = this.learningDataService.findInitialTopic(subject.children || [], subject);
+      this.selectedTopic = null;
+      this.topicQuestionLoadError = '';
       this.cdr.detectChanges();
     } finally {
       this.loading = false;
@@ -66,17 +73,14 @@ export class LearningPageComponent {
     }
   }
 
-  protected onTopicSelected(topic: TopicNode): void {
+  protected async onTopicSelected(topic: TopicNode): Promise<void> {
     if (!this.selectedSubject) {
       return;
     }
 
-    if (this.isTopicLocked(topic)) {
-      this.subscriptionAccessService.redirectToSubscription(this.router, `/learning/topics/${this.selectedSubject.id}`);
-      return;
-    }
-
     this.selectedTopic = topic;
+    this.topicQuestionLoadError = '';
+    await this.ensureTopicQuestionsLoaded(topic);
     this.closeTopicPicker();
   }
 
@@ -89,32 +93,55 @@ export class LearningPageComponent {
   }
 
   protected isTopicGroup(topic: TopicNode): boolean {
-    return !!topic.children?.length && !topic.questions?.length;
+    return !!topic.children?.length;
   }
 
   protected topicQuestionCount(topic: TopicNode): number {
-    return topic.questions?.length || 0;
+    return topic.questionCount || topic.questions?.length || 0;
   }
 
   protected topicTotalQuestionCount(topic: TopicNode): number {
-    let total = topic.questions?.length || 0;
+    let total = topic.questionCount || topic.questions?.length || 0;
     for (const child of topic.children || []) {
       total += this.topicTotalQuestionCount(child);
     }
     return total;
   }
 
-  protected selectChildTopic(topic: TopicNode): void {
+  protected async selectChildTopic(topic: TopicNode): Promise<void> {
     if (!this.selectedSubject) {
       return;
     }
 
-    if (this.isTopicLocked(topic)) {
-      this.subscriptionAccessService.redirectToSubscription(this.router, `/learning/topics/${this.selectedSubject.id}`);
+    this.selectedTopic = topic;
+    this.topicQuestionLoadError = '';
+    await this.ensureTopicQuestionsLoaded(topic);
+  }
+
+  protected getNextTopicForSelected(): TopicNode | null {
+    if (!this.selectedSubject || !this.selectedTopic || this.isTopicGroup(this.selectedTopic)) {
+      return null;
+    }
+
+    const orderedLeafTopics = this.flattenLeafTopics(this.selectedSubject.children || []);
+    const currentIndex = orderedLeafTopics.findIndex((topic) => topic.id === this.selectedTopic?.id);
+    if (currentIndex < 0 || currentIndex >= orderedLeafTopics.length - 1) {
+      return null;
+    }
+
+    return orderedLeafTopics[currentIndex + 1] || null;
+  }
+
+  protected async goToNextTopic(): Promise<void> {
+    const nextTopic = this.getNextTopicForSelected();
+    if (!nextTopic) {
       return;
     }
 
-    this.selectedTopic = topic;
+    this.selectedTopic = nextTopic;
+    this.topicQuestionLoadError = '';
+    await this.ensureTopicQuestionsLoaded(nextTopic);
+    this.scrollToTopicTop();
   }
 
   protected openTopicPicker(): void {
@@ -123,5 +150,75 @@ export class LearningPageComponent {
 
   protected closeTopicPicker(): void {
     this.isTopicPickerOpen = false;
+  }
+
+  private async ensureTopicQuestionsLoaded(topic: TopicNode): Promise<void> {
+    if (topic.children?.length || topic.questions?.length) {
+      return;
+    }
+
+    this.loadingTopicQuestions = true;
+    this.topicQuestionLoadError = '';
+    this.cdr.detectChanges();
+
+    try {
+      const questions = await this.learningDataService.getTopicQuestions(topic.id);
+      if (!questions) {
+        this.topicQuestionLoadError = 'Could not load questions for this topic.';
+        return;
+      }
+
+      topic.questions = questions;
+      topic.questionCount = questions.length;
+      this.prefetchTopicImages(questions);
+    } catch (err) {
+      if (err instanceof Error && err.message === 'TOPIC_PREMIUM_FORBIDDEN') {
+        this.topicQuestionLoadError = 'This topic requires premium subscription.';
+        return;
+      }
+
+      this.topicQuestionLoadError = 'Could not load questions for this topic.';
+    } finally {
+      this.loadingTopicQuestions = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  private prefetchTopicImages(questions: { answerImageUrl?: string }[]): void {
+    const imageUrls = questions
+      .map((question) => question.answerImageUrl || '')
+      .filter((url) => !!url);
+
+    for (const imageUrl of imageUrls) {
+      const image = new Image();
+      image.loading = 'eager';
+      image.src = imageUrl;
+    }
+  }
+
+  private flattenLeafTopics(topics: TopicNode[]): TopicNode[] {
+    const flattened: TopicNode[] = [];
+
+    for (const topic of topics) {
+      if (topic.children?.length) {
+        flattened.push(...this.flattenLeafTopics(topic.children));
+      } else {
+        flattened.push(topic);
+      }
+    }
+
+    return flattened;
+  }
+
+  private scrollToTopicTop(): void {
+    requestAnimationFrame(() => {
+      const topicOverview = document.querySelector('.topic-overview');
+      if (topicOverview instanceof HTMLElement) {
+        topicOverview.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
   }
 }

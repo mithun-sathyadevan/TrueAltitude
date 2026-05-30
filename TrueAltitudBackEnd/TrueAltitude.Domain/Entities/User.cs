@@ -24,6 +24,9 @@ public class User
     public DateTime? UpdatedAt { get; set; }
     public DateTime? LastLoginAt { get; set; }
 
+    public string? RefreshToken { get; set; }
+    public DateTime? RefreshTokenExpiresAt { get; set; }
+
     public string SubscriptionStatus { get; set; } = "none"; // none, active, expired
     public string? SubscriptionPlanCode { get; set; }
     public string? SubscriptionPlanName { get; set; }

@@ -1,4 +1,6 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
+using System.Security.Cryptography;
 using TrueAltitude.Application.DTOs;
 using TrueAltitude.Domain.Entities;
 using TrueAltitude.Infrastructure.Interfaces;
@@ -12,6 +14,7 @@ public interface IAuthService
     Task<AuthResponseDto> LoginWithGoogleAsync(string googleToken);
     Task<AuthResponseDto> VerifyEmailAsync(VerifyEmailDto dto);
     Task<AuthResponseDto> ResendOtpAsync(string email);
+    Task<AuthResponseDto> RefreshTokenAsync(RefreshTokenRequestDto dto);
 }
 
 public class AuthService : IAuthService
@@ -21,12 +24,14 @@ public class AuthService : IAuthService
     private readonly IEmailService _emailService;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly ILogger<AuthService> _logger;
+    private readonly int _refreshTokenExpiryMinutes;
 
     public AuthService(
         IUserRepository userRepository,
         IGoogleOAuthService googleOAuthService,
         IEmailService emailService,
         IJwtTokenService jwtTokenService,
+        IConfiguration configuration,
         ILogger<AuthService> logger)
     {
         _userRepository = userRepository;
@@ -34,6 +39,7 @@ public class AuthService : IAuthService
         _emailService = emailService;
         _jwtTokenService = jwtTokenService;
         _logger = logger;
+        _refreshTokenExpiryMinutes = configuration.GetValue<int?>("JwtSettings:RefreshTokenExpiryMinutes") ?? 60;
     }
 
     public async Task<AuthResponseDto> RegisterAsync(RegisterUserDto dto)
@@ -131,12 +137,18 @@ public class AuthService : IAuthService
         await _userRepository.UpdateAsync(user);
 
         var token = _jwtTokenService.GenerateToken(user);
+        var refreshToken = GenerateRefreshToken();
+        user.RefreshToken = refreshToken;
+        user.RefreshTokenExpiresAt = DateTime.UtcNow.AddMinutes(_refreshTokenExpiryMinutes);
+        await _userRepository.UpdateAsync(user);
 
         return new AuthResponseDto
         {
             Success = true,
             Message = "Email verified successfully.",
             Token = token,
+            RefreshToken = refreshToken,
+            RefreshTokenExpiresAt = user.RefreshTokenExpiresAt,
             User = MapUserToDto(user)
         };
     }
@@ -200,6 +212,8 @@ public class AuthService : IAuthService
         }
 
         user.LastLoginAt = DateTime.UtcNow;
+        user.RefreshToken = GenerateRefreshToken();
+        user.RefreshTokenExpiresAt = DateTime.UtcNow.AddMinutes(_refreshTokenExpiryMinutes);
         await _userRepository.UpdateAsync(user);
 
         return new AuthResponseDto
@@ -207,6 +221,8 @@ public class AuthService : IAuthService
             Success = true,
             Message = "Login successful.",
             Token = _jwtTokenService.GenerateToken(user),
+            RefreshToken = user.RefreshToken,
+            RefreshTokenExpiresAt = user.RefreshTokenExpiresAt,
             User = MapUserToDto(user)
         };
     }
@@ -248,6 +264,15 @@ public class AuthService : IAuthService
             user.Provider = "google";
             user.IsEmailVerified = true;
             user.LastLoginAt = DateTime.UtcNow;
+            user.RefreshToken = GenerateRefreshToken();
+            user.RefreshTokenExpiresAt = DateTime.UtcNow.AddMinutes(_refreshTokenExpiryMinutes);
+            await _userRepository.UpdateAsync(user);
+        }
+
+        if (string.IsNullOrWhiteSpace(user.RefreshToken) || !user.RefreshTokenExpiresAt.HasValue || user.RefreshTokenExpiresAt <= DateTime.UtcNow)
+        {
+            user.RefreshToken = GenerateRefreshToken();
+            user.RefreshTokenExpiresAt = DateTime.UtcNow.AddMinutes(_refreshTokenExpiryMinutes);
             await _userRepository.UpdateAsync(user);
         }
 
@@ -256,6 +281,49 @@ public class AuthService : IAuthService
             Success = true,
             Message = "Google login successful.",
             Token = _jwtTokenService.GenerateToken(user),
+            RefreshToken = user.RefreshToken,
+            RefreshTokenExpiresAt = user.RefreshTokenExpiresAt,
+            User = MapUserToDto(user)
+        };
+    }
+
+    public async Task<AuthResponseDto> RefreshTokenAsync(RefreshTokenRequestDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.RefreshToken))
+        {
+            return new AuthResponseDto { Success = false, Message = "Refresh token is required." };
+        }
+
+        var user = await _userRepository.GetByRefreshTokenAsync(dto.RefreshToken);
+        if (user == null)
+        {
+            return new AuthResponseDto { Success = false, Message = "Invalid refresh token." };
+        }
+
+        if (!user.RefreshTokenExpiresAt.HasValue || user.RefreshTokenExpiresAt <= DateTime.UtcNow)
+        {
+            user.RefreshToken = null;
+            user.RefreshTokenExpiresAt = null;
+            await _userRepository.UpdateAsync(user);
+            return new AuthResponseDto { Success = false, Message = "Refresh token expired. Please login again." };
+        }
+
+        if (!user.IsActive)
+        {
+            return new AuthResponseDto { Success = false, Message = "User account is inactive." };
+        }
+
+        user.RefreshToken = GenerateRefreshToken();
+        user.RefreshTokenExpiresAt = DateTime.UtcNow.AddMinutes(_refreshTokenExpiryMinutes);
+        await _userRepository.UpdateAsync(user);
+
+        return new AuthResponseDto
+        {
+            Success = true,
+            Message = "Token refreshed successfully.",
+            Token = _jwtTokenService.GenerateToken(user),
+            RefreshToken = user.RefreshToken,
+            RefreshTokenExpiresAt = user.RefreshTokenExpiresAt,
             User = MapUserToDto(user)
         };
     }
@@ -278,6 +346,13 @@ public class AuthService : IAuthService
     private static string GenerateOtp()
     {
         return Random.Shared.Next(100000, 999999).ToString();
+    }
+
+    private static string GenerateRefreshToken()
+    {
+        var bytes = new byte[48];
+        RandomNumberGenerator.Fill(bytes);
+        return Convert.ToBase64String(bytes);
     }
 
     private static UserResponseDto MapUserToDto(User user)

@@ -6,21 +6,26 @@ export const adminGuard: CanActivateFn = (_, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  const user = authService.currentUser();
+  return (async () => {
+    if (!authService.isLoggedIn()) {
+      authService.logout();
+      return router.createUrlTree(['/login'], {
+        queryParams: { returnUrl: state.url },
+      });
+    }
 
-  // Check if user is logged in
-  if (!authService.isLoggedIn()) {
-    return router.createUrlTree(['/login'], {
-      queryParams: { returnUrl: state.url },
-    });
-  }
+    const token = await authService.getValidAccessToken();
+    if (!token) {
+      return router.createUrlTree(['/login'], {
+        queryParams: { returnUrl: state.url },
+      });
+    }
 
-  // Check if user is admin
-  if (user?.role === 'Admin') {
-    return true;
-  }
+    const user = authService.currentUser();
+    if ((user?.role || '').toLowerCase() === 'admin') {
+      return true;
+    }
 
-  // User is logged in but not an admin
-  router.navigate(['/']);
-  return false;
+    return router.createUrlTree(['/']);
+  })();
 };

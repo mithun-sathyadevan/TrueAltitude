@@ -10,6 +10,10 @@
       </p>
       <button type="button" class="premium-action-btn" (click)="goToSubscription()">Premium Access</button>
     </div>
+  } @else if (loadingQuestions) {
+    <p class="muted empty-state">Loading questions...</p>
+  } @else if (loadError) {
+    <p class="muted empty-state">{{ loadError }}</p>
   } @else if (hasQuestions()) {
     <div class="question-list">
       @for (question of topic?.questions || []; track question.id) {
@@ -45,12 +49,29 @@
               <div class="result" [class.pass]="selectedOption.isCorrect" [class.fail]="!selectedOption.isCorrect">
                 <strong>{{ selectedOption.isCorrect ? 'Pass' : 'Fail' }}</strong>
                 <p>{{ getQuestionExplanation(question) }}</p>
+                @if (question.answerImageUrl) {
+                  <div class="answer-media">
+                    <img [src]="question.answerImageUrl" alt="Answer reference" loading="lazy" decoding="async" />
+                  </div>
+                }
               </div>
             }
           }
         </article>
       }
     </div>
+
+    @if (showNextTopicNavigation) {
+      <div class="topic-nav-row">
+        <button type="button" class="next-topic-btn" [disabled]="!hasNextTopic" (click)="onNextTopic()">
+          @if (hasNextTopic) {
+            <span>Next Section: {{ nextTopicTitle || 'Continue' }}</span>
+          } @else {
+            <span>End Of Sections</span>
+          }
+        </button>
+      </div>
+    }
   } @else {
     <p class="muted empty-state">No MCQ added for this topic yet. Select another topic or add questions here.</p>
   }

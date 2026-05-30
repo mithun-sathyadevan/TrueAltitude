@@ -19,6 +19,7 @@ public class SubscriptionPurchase
     public string? ProviderOrderId { get; set; }
     public string? ProviderPaymentId { get; set; }
     public string? ProviderSignature { get; set; }
+    public string? FailureReason { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? PaidAt { get; set; }

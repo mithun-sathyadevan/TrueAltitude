@@ -21,6 +21,8 @@ export interface GoogleLoginResponse {
   success: boolean;
   message: string;
   token?: string;
+  refreshToken?: string;
+  refreshTokenExpiresAt?: string;
   user?: AuthUser;
 }
 
@@ -40,6 +42,8 @@ export interface AuthResponse {
   success: boolean;
   message: string;
   token?: string;
+  refreshToken?: string;
+  refreshTokenExpiresAt?: string;
   user?: AuthUser;
 }
 
@@ -52,6 +56,8 @@ export interface GoogleAuthResult {
 export class AuthService {
   private readonly userStorageKey = 'truealtitude.authUser';
   private readonly tokenStorageKey = 'truealtitude.authToken';
+  private readonly refreshTokenStorageKey = 'truealtitude.refreshToken';
+  private readonly refreshTokenExpiryStorageKey = 'truealtitude.refreshTokenExpiry';
   private readonly legacyStorageKey = 'truealtitude.isLoggedIn';
   private readonly apiUrl = 'http://localhost:5137/api/auth';
   private readonly userSignal = signal<AuthUser | null>(this.readInitialAuthState());
@@ -74,7 +80,7 @@ export class AuthService {
       }
 
       if (response.success && response.user) {
-        this.persistAuth(response.user, response.token);
+        this.persistAuth(response.user, response.token, response.refreshToken, response.refreshTokenExpiresAt);
       }
 
       return response;
@@ -124,7 +130,7 @@ export class AuthService {
       }
 
       if (response.success && response.user) {
-        this.persistAuth(response.user, response.token);
+        this.persistAuth(response.user, response.token, response.refreshToken, response.refreshTokenExpiresAt);
       }
 
       return response;
@@ -152,7 +158,7 @@ export class AuthService {
         .toPromise();
 
       if (response?.success && response?.user) {
-        this.persistAuth(response.user, response.token);
+        this.persistAuth(response.user, response.token, response.refreshToken, response.refreshTokenExpiresAt);
 
         return { success: true, message: response.message || 'Google login successful.' };
       }
@@ -171,6 +177,56 @@ export class AuthService {
     return localStorage.getItem(this.tokenStorageKey);
   }
 
+  async getValidAccessToken(): Promise<string | null> {
+    const token = this.getAuthToken();
+    if (token && !this.isJwtExpired(token)) {
+      return token;
+    }
+
+    const refreshed = await this.refreshAccessToken();
+    if (refreshed) {
+      const newToken = this.getAuthToken();
+      if (newToken && !this.isJwtExpired(newToken)) {
+        return newToken;
+      }
+    }
+
+    this.logout();
+    return null;
+  }
+
+  async refreshAccessToken(): Promise<boolean> {
+    const refreshToken = localStorage.getItem(this.refreshTokenStorageKey);
+    const refreshTokenExpiry = localStorage.getItem(this.refreshTokenExpiryStorageKey);
+
+    if (!refreshToken || !refreshTokenExpiry) {
+      return false;
+    }
+
+    const expiryTime = new Date(refreshTokenExpiry).getTime();
+    if (Number.isNaN(expiryTime) || expiryTime <= Date.now()) {
+      this.logout();
+      return false;
+    }
+
+    try {
+      const response = await this.http
+        .post<AuthResponse>(`${this.apiUrl}/refresh-token`, { refreshToken })
+        .toPromise();
+
+      if (!response?.success || !response.token || !response.user) {
+        this.logout();
+        return false;
+      }
+
+      this.persistAuth(response.user, response.token, response.refreshToken, response.refreshTokenExpiresAt);
+      return true;
+    } catch {
+      this.logout();
+      return false;
+    }
+  }
+
   updateSession(user: AuthUser, token?: string): void {
     this.persistAuth(user, token);
   }
@@ -179,16 +235,47 @@ export class AuthService {
     this.userSignal.set(null);
     localStorage.removeItem(this.userStorageKey);
     localStorage.removeItem(this.tokenStorageKey);
+    localStorage.removeItem(this.refreshTokenStorageKey);
+    localStorage.removeItem(this.refreshTokenExpiryStorageKey);
     localStorage.removeItem(this.legacyStorageKey);
   }
 
-  private persistAuth(user: AuthUser, token?: string): void {
+  private persistAuth(user: AuthUser, token?: string, refreshToken?: string, refreshTokenExpiresAt?: string): void {
     this.userSignal.set(user);
     localStorage.setItem(this.userStorageKey, JSON.stringify(user));
     localStorage.setItem(this.legacyStorageKey, 'true');
 
     if (token) {
       localStorage.setItem(this.tokenStorageKey, token);
+    }
+
+    if (refreshToken) {
+      localStorage.setItem(this.refreshTokenStorageKey, refreshToken);
+    }
+
+    if (refreshTokenExpiresAt) {
+      localStorage.setItem(this.refreshTokenExpiryStorageKey, refreshTokenExpiresAt);
+    }
+  }
+
+  private isJwtExpired(token: string): boolean {
+    try {
+      const payloadSegment = token.split('.')[1];
+      if (!payloadSegment) {
+        return true;
+      }
+
+      const normalized = payloadSegment.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = normalized.padEnd(normalized.length + (4 - (normalized.length % 4 || 4)) % 4, '=');
+      const payload = JSON.parse(atob(padded));
+      const exp = Number(payload?.exp);
+      if (!exp) {
+        return true;
+      }
+
+      return Date.now() >= exp * 1000;
+    } catch {
+      return true;
     }
   }
 

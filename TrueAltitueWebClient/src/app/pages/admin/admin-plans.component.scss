@@ -1,0 +1,121 @@
+.admin-plans {
+  color: #2c3e50 !important;
+
+  h1 {
+    margin-bottom: 8px;
+  }
+
+  .description {
+    margin-bottom: 16px;
+    color: #607080;
+  }
+
+  .actions-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .primary-btn,
+  .secondary-btn,
+  .danger-btn {
+    border: none;
+    border-radius: 4px;
+    padding: 9px 14px;
+    color: #fff !important;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .primary-btn {
+    background: #3498db;
+
+    &:disabled {
+      background: #95a5a6;
+      cursor: not-allowed;
+    }
+  }
+
+  .secondary-btn {
+    background: #2c3e50;
+  }
+
+  .danger-btn {
+    background: #e74c3c;
+  }
+
+  .alert {
+    margin-bottom: 12px;
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .alert.error {
+    background: #ffe8e8;
+    color: #8f1f1f;
+    border: 1px solid #f3b6b6;
+  }
+
+  .alert.success {
+    background: #e7f8ec;
+    color: #1f7a3a;
+    border: 1px solid #b9e4c5;
+  }
+
+  .plans-table-container {
+    overflow-x: auto;
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  }
+
+  .plans-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1050px;
+
+    thead {
+      background: #34495e;
+
+      th {
+        color: #fff !important;
+        font-weight: 600;
+        text-align: left;
+        padding: 12px;
+        font-size: 13px;
+      }
+    }
+
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #eef2f5;
+      vertical-align: middle;
+    }
+
+    input[type='text'],
+    input[type='number'] {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #cfd6dd;
+      border-radius: 4px;
+      color: #2c3e50;
+      background: #fff;
+    }
+
+    .checkbox-cell {
+      text-align: center;
+
+      input[type='checkbox'] {
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+
+  .loading {
+    padding: 32px;
+    text-align: center;
+    color: #7b8794;
+  }
+}

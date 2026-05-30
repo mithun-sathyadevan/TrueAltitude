@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using TrueAltitude.Application.DTOs;
 using TrueAltitude.Application.Services;
 
@@ -18,6 +19,7 @@ public class LearningController : ControllerBase
     }
 
     [HttpGet("subjects")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetSubjects()
     {
         var subjects = await _learningService.GetSubjectsAsync();
@@ -25,6 +27,7 @@ public class LearningController : ControllerBase
     }
 
     [HttpGet("subjects/{subjectCode}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetSubjectByCode(string subjectCode)
     {
         var subject = await _learningService.GetSubjectTreeAsync(subjectCode);
@@ -36,9 +39,58 @@ public class LearningController : ControllerBase
         return Ok(subject);
     }
 
+    [HttpGet("topics/{topicCode}/questions")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetTopicQuestions(string topicCode)
+    {
+        var hasPremiumAccess = UserHasPremiumAccess();
+        var topicRequiresSubscription = await _learningService.TopicRequiresSubscriptionAsync(topicCode);
+        if (!topicRequiresSubscription.HasValue)
+        {
+            return NotFound(new { message = "Topic not found." });
+        }
+
+        var questions = await _learningService.GetTopicQuestionsAsync(topicCode);
+        if (questions == null)
+        {
+            return NotFound(new { message = "Topic not found." });
+        }
+
+        if (hasPremiumAccess)
+        {
+            return Ok(questions);
+        }
+
+        var maskedQuestions = questions.Select(question =>
+        {
+            if (!question.RequiresSubscription)
+            {
+                return question;
+            }
+
+            return new LearningQuestionDto
+            {
+                Id = question.Id,
+                Text = "Premium Access Required",
+                AnswerImageUrl = null,
+                Explanation = string.Empty,
+                RequiresSubscription = true,
+                SubscriptionLabel = question.SubscriptionLabel,
+                Options = new List<LearningQuestionOptionDto>()
+            };
+        }).ToList();
+
+        return Ok(maskedQuestions);
+    }
+
     [HttpPost("exam/questions")]
     public async Task<IActionResult> GetExamQuestions([FromBody] ExamQuestionRequest request)
     {
+        if (!UserHasPremiumAccess())
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Premium subscription is required for real-time quiz." });
+        }
+
         if (request?.SubjectCodes == null || request.SubjectCodes.Count == 0)
         {
             return BadRequest(new { message = "Subject codes are required." });
@@ -51,6 +103,11 @@ public class LearningController : ControllerBase
     [HttpPost("exam/evaluate")]
     public async Task<IActionResult> EvaluateExam([FromBody] ExamEvaluationRequest request)
     {
+        if (!UserHasPremiumAccess())
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Premium subscription is required for real-time quiz." });
+        }
+
         if (request?.Questions == null || request.Questions.Count == 0)
         {
             return BadRequest(new { message = "Questions payload is required." });
@@ -68,6 +125,28 @@ public class LearningController : ControllerBase
             request.IncludeExplanations);
 
         return Ok(result);
+    }
+
+    private bool UserHasPremiumAccess()
+    {
+        if (User.IsInRole("Admin"))
+        {
+            return true;
+        }
+
+        var subscriptionStatus = User.FindFirstValue("subscription_status");
+        if (!string.Equals(subscriptionStatus, "active", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var expiresAtRaw = User.FindFirstValue("subscription_expires_at");
+        if (string.IsNullOrWhiteSpace(expiresAtRaw))
+        {
+            return true;
+        }
+
+        return DateTime.TryParse(expiresAtRaw, out var expiresAtUtc) && expiresAtUtc.ToUniversalTime() > DateTime.UtcNow;
     }
 }
 

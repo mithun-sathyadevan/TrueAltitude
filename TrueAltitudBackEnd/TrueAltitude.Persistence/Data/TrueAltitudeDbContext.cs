@@ -60,6 +60,12 @@ public class TrueAltitudeDbContext : DbContext
             entity.Property(e => e.OtpExpiresAt)
                 .HasColumnType("datetime(6)");
 
+            entity.Property(e => e.RefreshToken)
+                .HasMaxLength(500);
+
+            entity.Property(e => e.RefreshTokenExpiresAt)
+                .HasColumnType("datetime(6)");
+
             entity.Property(e => e.SubscriptionStatus)
                 .IsRequired()
                 .HasMaxLength(20)
@@ -133,6 +139,9 @@ public class TrueAltitudeDbContext : DbContext
 
             entity.Property(e => e.ProviderSignature)
                 .HasMaxLength(255);
+
+            entity.Property(e => e.FailureReason)
+                .HasMaxLength(500);
 
             entity.Property(e => e.CreatedAt)
                 .HasColumnType("datetime(6)");
@@ -228,6 +237,9 @@ public class TrueAltitudeDbContext : DbContext
             entity.Property(e => e.Text)
                 .IsRequired()
                 .HasColumnType("longtext");
+
+            entity.Property(e => e.AnswerImageUrl)
+                .HasMaxLength(1000);
 
             entity.Property(e => e.SubscriptionLabel)
                 .HasMaxLength(100);

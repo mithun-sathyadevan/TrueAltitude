@@ -14,8 +14,11 @@ namespace TrueAltitude.Application.Services;
 public interface ISubscriptionService
 {
     Task<List<SubscriptionPlanDto>> GetPlansAsync();
+    Task<List<SubscriptionPlanDto>> GetPlansForAdminAsync();
+    Task<List<SubscriptionPlanDto>> UpdatePlansAsync(List<SubscriptionPlanDto> plans);
     Task<SubscriptionOrderResponseDto> CreateOrderAsync(int userId, CreateSubscriptionOrderDto dto);
     Task<SubscriptionPaymentResultDto> VerifyPaymentAsync(int userId, VerifySubscriptionPaymentDto dto);
+    Task<bool> ProcessRazorpayWebhookAsync(string eventName, string? providerOrderId, string? providerPaymentId, string? providerSignature, string? failureReason);
 }
 
 public class SubscriptionService : ISubscriptionService
@@ -52,6 +55,66 @@ public class SubscriptionService : ISubscriptionService
     {
         var plans = await GetConfiguredPlansAsync();
         return plans.OrderBy(p => p.DurationDays).ToList();
+    }
+
+    public async Task<List<SubscriptionPlanDto>> GetPlansForAdminAsync()
+    {
+        return await GetPlansAsync();
+    }
+
+    public async Task<List<SubscriptionPlanDto>> UpdatePlansAsync(List<SubscriptionPlanDto> plans)
+    {
+        if (plans.Count == 0)
+        {
+            throw new InvalidOperationException("At least one subscription plan is required.");
+        }
+
+        var normalizedPlans = plans
+            .Select(p => new SubscriptionPlanDto
+            {
+                Code = p.Code.Trim(),
+                Name = p.Name.Trim(),
+                PriceInPaise = p.PriceInPaise,
+                DurationDays = p.DurationDays,
+                Description = string.IsNullOrWhiteSpace(p.Description) ? null : p.Description.Trim(),
+                IsPopular = p.IsPopular
+            })
+            .ToList();
+
+        if (normalizedPlans.Any(p => string.IsNullOrWhiteSpace(p.Code) || string.IsNullOrWhiteSpace(p.Name)))
+        {
+            throw new InvalidOperationException("Each plan must have both code and name.");
+        }
+
+        if (normalizedPlans.Any(p => p.PriceInPaise <= 0 || p.DurationDays <= 0))
+        {
+            throw new InvalidOperationException("Each plan must have positive price and duration.");
+        }
+
+        var duplicateCode = normalizedPlans
+            .GroupBy(p => p.Code, StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault(g => g.Count() > 1)?.Key;
+        if (!string.IsNullOrWhiteSpace(duplicateCode))
+        {
+            throw new InvalidOperationException($"Duplicate plan code found: {duplicateCode}");
+        }
+
+        var model = new SubscriptionSettingsModel
+        {
+            Plans = normalizedPlans
+        };
+
+        var valueJson = JsonSerializer.Serialize(model, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = false
+        });
+
+        await _settingsRepository.UpsertAsync(SubscriptionPlansKey, valueJson);
+        return normalizedPlans
+            .OrderBy(p => p.DurationDays)
+            .ThenBy(p => p.PriceInPaise)
+            .ToList();
     }
 
     public async Task<SubscriptionOrderResponseDto> CreateOrderAsync(int userId, CreateSubscriptionOrderDto dto)
@@ -102,6 +165,7 @@ public class SubscriptionService : ISubscriptionService
             if (!orderResult.Success)
             {
                 purchase.Status = "failed";
+                purchase.FailureReason = orderResult.Message;
                 await _purchaseRepository.UpdateAsync(purchase);
                 return new SubscriptionOrderResponseDto { Success = false, Message = orderResult.Message };
             }
@@ -174,15 +238,73 @@ public class SubscriptionService : ISubscriptionService
             if (!verified)
             {
                 purchase.Status = "failed";
+                purchase.FailureReason = "Payment signature verification failed.";
                 await _purchaseRepository.UpdateAsync(purchase);
                 return new SubscriptionPaymentResultDto { Success = false, Message = "Payment signature verification failed." };
             }
         }
 
-        var user = await _userRepository.GetByIdAsync(userId);
-        if (user == null)
+        var activatedUser = await ActivatePurchaseAsync(purchase, dto.ProviderPaymentId, dto.ProviderSignature);
+        if (activatedUser == null)
         {
             return new SubscriptionPaymentResultDto { Success = false, Message = "User not found." };
+        }
+
+        return new SubscriptionPaymentResultDto
+        {
+            Success = true,
+            Message = "Subscription activated successfully.",
+            Token = _jwtTokenService.GenerateToken(activatedUser),
+            User = MapUserToDto(activatedUser)
+        };
+    }
+
+    public async Task<bool> ProcessRazorpayWebhookAsync(string eventName, string? providerOrderId, string? providerPaymentId, string? providerSignature, string? failureReason)
+    {
+        if (string.IsNullOrWhiteSpace(providerOrderId))
+        {
+            return true;
+        }
+
+        var purchase = await _purchaseRepository.GetByProviderOrderIdAsync(providerOrderId);
+        if (purchase == null)
+        {
+            _logger.LogWarning("Razorpay webhook received for unknown order {OrderId}", providerOrderId);
+            return true;
+        }
+
+        if (string.Equals(eventName, "payment.failed", StringComparison.OrdinalIgnoreCase))
+        {
+            purchase.Status = "failed";
+            purchase.ProviderPaymentId = providerPaymentId;
+            purchase.ProviderSignature = providerSignature;
+            purchase.FailureReason = string.IsNullOrWhiteSpace(failureReason)
+                ? "Payment failed at gateway."
+                : failureReason.Trim();
+            await _purchaseRepository.UpdateAsync(purchase);
+            return true;
+        }
+
+        if (!string.Equals(eventName, "payment.captured", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (string.Equals(purchase.Status, "paid", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        var activatedUser = await ActivatePurchaseAsync(purchase, providerPaymentId ?? string.Empty, providerSignature ?? string.Empty);
+        return activatedUser != null;
+    }
+
+    private async Task<User?> ActivatePurchaseAsync(SubscriptionPurchase purchase, string providerPaymentId, string providerSignature)
+    {
+        var user = await _userRepository.GetByIdAsync(purchase.UserId);
+        if (user == null)
+        {
+            return null;
         }
 
         var now = DateTime.UtcNow;
@@ -192,8 +314,9 @@ public class SubscriptionService : ISubscriptionService
         var effectiveEnd = effectiveStart.AddDays(purchase.DurationDays);
 
         purchase.Status = "paid";
-        purchase.ProviderPaymentId = dto.ProviderPaymentId;
-        purchase.ProviderSignature = dto.ProviderSignature;
+        purchase.ProviderPaymentId = providerPaymentId;
+        purchase.ProviderSignature = providerSignature;
+        purchase.FailureReason = null;
         purchase.PaidAt = now;
         purchase.SubscriptionEndsAt = effectiveEnd;
         await _purchaseRepository.UpdateAsync(purchase);
@@ -205,13 +328,7 @@ public class SubscriptionService : ISubscriptionService
         user.SubscriptionExpiresAt = effectiveEnd;
         await _userRepository.UpdateAsync(user);
 
-        return new SubscriptionPaymentResultDto
-        {
-            Success = true,
-            Message = "Subscription activated successfully.",
-            Token = _jwtTokenService.GenerateToken(user),
-            User = MapUserToDto(user)
-        };
+        return user;
     }
 
     private async Task<List<SubscriptionPlanDto>> GetConfiguredPlansAsync()
@@ -228,8 +345,18 @@ public class SubscriptionService : ISubscriptionService
             {
                 PropertyNameCaseInsensitive = true
             });
-
-            return parsed?.Plans?.Where(p => !string.IsNullOrWhiteSpace(p.Code)).ToList() ?? new List<SubscriptionPlanDto>();
+            return parsed?.Plans?
+                .Where(p => !string.IsNullOrWhiteSpace(p.Code))
+                .Select(p => new SubscriptionPlanDto
+                {
+                    Code = p.Code,
+                    Name = p.Name,
+                    PriceInPaise = p.PriceInPaise,
+                    DurationDays = p.DurationDays,
+                    Description = p.Description,
+                    IsPopular = p.IsPopular
+                })
+                .ToList() ?? new List<SubscriptionPlanDto>();
         }
         catch (Exception ex)
         {

@@ -1,0 +1,23 @@
+
+> true-altitue-web-client@0.0.0 build
+> ng build --configuration development
+
+[33m❯[39m Building...
+[32m✔[39m Building...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m        [2m | [22m[1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m         [2m | [22m [36m2.02 MB[39m[2m | [22m
+[32mstyles.css[39m         [2m | [22m[2mstyles[22m       [2m | [22m [36m1.65 kB[39m[2m | [22m
+
+[1m [22m                  [2m | [22m[1mInitial total[22m[2m | [22m [1m2.02 MB[22m
+
+Application bundle generation complete. [3.479 seconds] - 2026-05-16T07:46:20.165Z
+
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: CurrencyPipe is not used within the template of SubscriptionPageComponent[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/pages/subscription/subscription-page.component.ts:18:38:
+[37m      18 │ ...rts: [CommonModule, RouterLink, [32mCurrencyPipe[37m, TopHeaderComponent],
+         ╵                                    [32m~~~~~~~~~~~~[0m
+
+[39m[22m
+Output location: C:\AthulB\TrueAltitude\TrueAltitueWebClient\dist\true-altitue-web-client
+

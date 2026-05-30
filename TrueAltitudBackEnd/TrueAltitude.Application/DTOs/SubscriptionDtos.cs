@@ -12,6 +12,11 @@ public class SubscriptionPlanDto
     public bool IsPopular { get; set; }
 }
 
+public class UpdateSubscriptionPlansRequestDto
+{
+    public List<SubscriptionPlanDto> Plans { get; set; } = new();
+}
+
 public class CreateSubscriptionOrderDto
 {
     public string PlanCode { get; set; } = string.Empty;

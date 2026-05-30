@@ -91,4 +91,19 @@ public class AuthController : ControllerBase
         var result = await _authService.ResendOtpAsync(dto.Email);
         return Ok(result);
     }
+
+    /// <summary>
+    /// Refresh access token using refresh token
+    /// </summary>
+    [HttpPost("refresh-token")]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.RefreshToken))
+        {
+            return BadRequest(new { message = "Refresh token is required." });
+        }
+
+        var result = await _authService.RefreshTokenAsync(dto);
+        return Ok(result);
+    }
 }

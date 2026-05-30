@@ -1,0 +1,152 @@
+.admin-subscriptions {
+  color: #2c3e50 !important;
+
+  h1 {
+    margin-bottom: 20px;
+  }
+
+  .filters-section {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+
+    .search-box {
+      flex: 1;
+      min-width: 280px;
+    }
+
+    .search-input,
+    .filter-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cfd6dd;
+      border-radius: 4px;
+      font-size: 14px;
+      color: #2c3e50;
+      background: #fff;
+    }
+
+    .status-filter {
+      min-width: 180px;
+    }
+
+    .search-btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 4px;
+      background: #3498db;
+      color: #fff !important;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  }
+
+  .purchases-table-container {
+    overflow-x: auto;
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+
+    .purchases-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1300px;
+
+      thead {
+        background: #34495e;
+
+        th {
+          color: #fff !important;
+          font-weight: 600;
+          text-align: left;
+          padding: 12px;
+          font-size: 13px;
+        }
+      }
+
+      tbody {
+        tr {
+          border-bottom: 1px solid #eef2f5;
+
+          &:hover {
+            background: #f8fbfd;
+          }
+        }
+
+        td {
+          padding: 12px;
+          font-size: 13px;
+          vertical-align: top;
+          color: #2c3e50;
+          word-break: break-word;
+        }
+      }
+
+      .cell-main {
+        font-weight: 600;
+      }
+
+      .cell-sub {
+        font-size: 12px;
+        color: #7b8794;
+      }
+
+      .status-chip {
+        display: inline-block;
+        border-radius: 12px;
+        font-size: 12px;
+        padding: 4px 10px;
+        font-weight: 600;
+
+        &.paid {
+          background: #dff6e6;
+          color: #1c8d4d;
+        }
+
+        &.pending {
+          background: #fff3da;
+          color: #a86e00;
+        }
+
+        &.failed {
+          background: #ffe1e1;
+          color: #b42318;
+        }
+      }
+    }
+
+    .loading {
+      padding: 32px;
+      text-align: center;
+      color: #7b8794;
+    }
+  }
+
+  .pagination {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+
+    .pagination-btn {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 4px;
+      background: #3498db;
+      color: #fff !important;
+      cursor: pointer;
+
+      &:disabled {
+        background: #bdc3c7;
+        cursor: not-allowed;
+      }
+    }
+
+    .page-info {
+      font-size: 14px;
+    }
+  }
+}

@@ -3,8 +3,16 @@
     <h2 class="section-title">Real-Time Exam Quiz</h2>
     <p class="muted">Select subjects, answer 10 randomly selected questions, and review your score after submit. 60-minute timer with auto-submit.</p>
 
+    @if (!hasPremiumAccess()) {
+      <div class="premium-lock">
+        <h3>Premium Feature</h3>
+        <p class="muted">Real-time quiz is available only for users with an active premium subscription.</p>
+        <button type="button" class="primary-btn" (click)="goToSubscription()">View Subscription Plans</button>
+      </div>
+    }
+
     <!-- Initial State: Show "Start Quiz" button -->
-    @if (!showSubjectSelector && !isExamStarted && !isExamFinished) {
+    @if (hasPremiumAccess() && !showSubjectSelector && !isExamStarted && !isExamFinished) {
       <div class="start-container">
         <button type="button" class="primary-btn large" (click)="openSubjectSelector()">
           Start Quiz
@@ -13,7 +21,7 @@
     }
 
     <!-- Subject Selection State -->
-    @if (showSubjectSelector && !isExamStarted && !isExamFinished) {
+    @if (hasPremiumAccess() && showSubjectSelector && !isExamStarted && !isExamFinished) {
       <div class="subject-selector">
         <h3>Select Subjects for Exam</h3>
 
@@ -169,6 +177,12 @@
 
             @if (getExplanation(question.id)) {
               <p class="muted">{{ getExplanation(question.id) }}</p>
+            }
+
+            @if (getAnswerImageUrl(question.id)) {
+              <div class="question-media">
+                <img [src]="getAnswerImageUrl(question.id)" alt="Answer reference" loading="lazy" decoding="async" />
+              </div>
             }
           </div>
         }

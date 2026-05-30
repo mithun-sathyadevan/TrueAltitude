@@ -8,7 +8,10 @@ import {
   ExamQuestionOption,
   TopicNode,
 } from '../../models/learning.models';
+import { Router } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 import { LearningDataService } from '../../services/learning-data.service';
+import { SubscriptionAccessService } from '../../services/subscription-access.service';
 
 @Component({
   selector: 'app-realtime-exam-page',
@@ -37,29 +40,54 @@ export class RealtimeExamPageComponent implements OnDestroy {
   protected answerChecks: Record<string, boolean> = {};
   protected answerExplanations: Record<string, string> = {};
   protected correctAnswerTexts: Record<string, string> = {};
+  protected answerImageUrls: Record<string, string> = {};
 
   private timerHandle: ReturnType<typeof setInterval> | null = null;
 
   constructor(
     private readonly learningDataService: LearningDataService,
+    private readonly authService: AuthService,
+    private readonly subscriptionAccessService: SubscriptionAccessService,
+    private readonly router: Router,
     private readonly cdr: ChangeDetectorRef,
   ) {
     console.log('[RealtimeExamPageComponent] Component initialized');
   }
 
+  protected hasPremiumAccess(): boolean {
+    return this.subscriptionAccessService.hasActiveSubscription();
+  }
+
+  protected goToSubscription(): void {
+    this.subscriptionAccessService.redirectToSubscription(this.router, '/learning/realtime-exam');
+  }
+
   protected async openSubjectSelector(): Promise<void> {
+    if (!this.hasPremiumAccess()) {
+      this.loadError = 'Real-time quiz is available only for premium users.';
+      return;
+    }
+
     console.log('[RealtimeExamPageComponent] Opening subject selector...');
     this.loadingSubjects = true;
     this.loadError = '';
     
     try {
       const subjects = await this.learningDataService.getSubjects();
-      console.log('[RealtimeExamPageComponent] Subjects loaded:', subjects?.length);
-      this.availableSubjects = subjects || [];
+      if (!subjects) {
+        this.loadError = 'Session expired. Please login again.';
+        this.authService.logout();
+        this.availableSubjects = [];
+        return;
+      }
+
+      console.log('[RealtimeExamPageComponent] Subjects loaded:', subjects.length);
+      this.availableSubjects = subjects;
       this.showSubjectSelector = true;
     } catch (err) {
       console.error('[RealtimeExamPageComponent] Error loading subjects:', err);
-      this.loadError = 'Could not load subjects.';
+      this.loadError = 'Session expired. Please login again.';
+      this.authService.logout();
     } finally {
       this.loadingSubjects = false;
       this.cdr.detectChanges();
@@ -90,6 +118,11 @@ export class RealtimeExamPageComponent implements OnDestroy {
   }
 
   protected async startExam(): Promise<void> {
+    if (!this.hasPremiumAccess()) {
+      this.loadError = 'Real-time quiz is available only for premium users.';
+      return;
+    }
+
     if (this.selectedSubjectCodes.size === 0) {
       this.loadError = 'Please select at least one subject.';
       return;
@@ -126,10 +159,16 @@ export class RealtimeExamPageComponent implements OnDestroy {
       this.answerChecks = {};
       this.answerExplanations = {};
       this.correctAnswerTexts = {};
+      this.answerImageUrls = {};
       this.timeLeftSeconds = this.totalSeconds;
       this.startTimer();
     } catch (err) {
       console.error('Failed to load exam questions:', err);
+      if (err instanceof Error && err.message === 'EXAM_PREMIUM_FORBIDDEN') {
+        this.loadError = 'Premium subscription is required to start real-time quiz.';
+        return;
+      }
+
       this.loadError = 'Failed to load exam questions. Please try again.';
     } finally {
       this.loadingQuestions = false;
@@ -160,6 +199,10 @@ export class RealtimeExamPageComponent implements OnDestroy {
 
   protected getCorrectAnswerText(questionId: string): string {
     return this.correctAnswerTexts[questionId] || '';
+  }
+
+  protected getAnswerImageUrl(questionId: string): string {
+    return this.answerImageUrls[questionId] || '';
   }
 
   protected goToQuestion(index: number): void {
@@ -221,6 +264,7 @@ export class RealtimeExamPageComponent implements OnDestroy {
     this.answerChecks = {};
     this.answerExplanations = {};
     this.correctAnswerTexts = {};
+    this.answerImageUrls = {};
     this.selectedSubjectCodes.clear();
     this.openSubjectSelector();
   }
@@ -245,6 +289,11 @@ export class RealtimeExamPageComponent implements OnDestroy {
   }
 
   private async evaluateAnswers(includeExplanations: boolean): Promise<void> {
+    if (!this.hasPremiumAccess()) {
+      this.loadError = 'Premium subscription is required to evaluate real-time quiz.';
+      return;
+    }
+
     if (Object.keys(this.selectedAnswers).length === 0) {
       this.score = 0;
       this.scorePercent = 0;
@@ -266,6 +315,10 @@ export class RealtimeExamPageComponent implements OnDestroy {
       }
 
       this.applyEvaluation(evaluation, includeExplanations);
+    } catch (err) {
+      if (err instanceof Error && err.message === 'EXAM_PREMIUM_FORBIDDEN') {
+        this.loadError = 'Premium subscription is required for real-time quiz.';
+      }
     } finally {
       this.loadingEvaluation = false;
       this.cdr.detectChanges();
@@ -278,9 +331,11 @@ export class RealtimeExamPageComponent implements OnDestroy {
 
     this.answerChecks = {};
     this.correctAnswerTexts = {};
+    this.answerImageUrls = {};
     for (const item of evaluation.results) {
       this.answerChecks[item.questionId] = item.isCorrect;
       this.correctAnswerTexts[item.questionId] = item.correctOptionText || '';
+      this.answerImageUrls[item.questionId] = item.answerImageUrl || '';
       if (includeExplanations) {
         this.answerExplanations[item.questionId] = item.explanation || '';
       }

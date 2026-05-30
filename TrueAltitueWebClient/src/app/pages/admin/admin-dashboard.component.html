@@ -23,6 +23,22 @@
         </a>
       </li>
       <li>
+        <a (click)="selectSection('subscriptions')"
+           [class.active]="activeSection === 'subscriptions'"
+           class="menu-item">
+          <span class="icon">💳</span>
+          <span>Subscriptions</span>
+        </a>
+      </li>
+      <li>
+        <a (click)="selectSection('plans')"
+           [class.active]="activeSection === 'plans'"
+           class="menu-item">
+          <span class="icon">🛠️</span>
+          <span>Plans</span>
+        </a>
+      </li>
+      <li>
         <a (click)="selectSection('topics')" 
            [class.active]="activeSection === 'topics'"
            class="menu-item">
@@ -45,6 +61,8 @@
 
   <main class="admin-content">
     <app-admin-users *ngIf="activeSection === 'users'"></app-admin-users>
+    <ng-container *ngIf="activeSection === 'subscriptions'" [ngComponentOutlet]="subscriptionsView"></ng-container>
+    <ng-container *ngIf="activeSection === 'plans'" [ngComponentOutlet]="plansView"></ng-container>
     <app-admin-subjects *ngIf="activeSection === 'subjects'"></app-admin-subjects>
     <app-admin-topics *ngIf="activeSection === 'topics'"></app-admin-topics>
     <app-admin-questions *ngIf="activeSection === 'questions'"></app-admin-questions>

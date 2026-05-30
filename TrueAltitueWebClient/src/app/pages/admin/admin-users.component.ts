@@ -1,7 +1,9 @@
 import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AdminService } from '../../services/admin.service';
+import { AuthService } from '../../services/auth.service';
 import { AdminUser, PaginatedResponse } from '../../models/admin.models';
 
 @Component({
@@ -28,6 +30,8 @@ export class AdminUsersComponent implements OnInit {
 
   constructor(
     private adminService: AdminService,
+    private authService: AuthService,
+    private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -70,6 +74,12 @@ export class AdminUsersComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (error) => {
+        if (error?.status === 401) {
+          this.authService.logout();
+          void this.router.navigate(['/login'], { queryParams: { returnUrl: '/admin' } });
+          return;
+        }
+
         this.debugInfo = `API Error: ${error.message || error}`;
         this.loading = false;
         this.cdr.markForCheck();

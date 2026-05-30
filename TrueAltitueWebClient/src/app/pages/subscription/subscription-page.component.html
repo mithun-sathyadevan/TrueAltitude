@@ -49,8 +49,8 @@
           <p class="muted description">{{ plan.description || 'Premium TrueAltitude access' }}</p>
 
           <div class="price-row">
-            <span class="currency">INR</span>
-            <span class="price">{{ priceInInr(plan.priceInPaise) | number: '1.0-0' }}</span>
+            <span class="currency">PAISE</span>
+            <span class="price">{{ priceInPaiseDisplay(plan.priceInPaise) | number: '1.0-0' }}</span>
           </div>
 
           <p class="duration">{{ plan.durationDays }} days access</p>

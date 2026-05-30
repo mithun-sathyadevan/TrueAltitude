@@ -3,6 +3,8 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   AdminUser,
+  AdminSubscriptionPurchase,
+  AdminSubscriptionPlan,
   Subject,
   Topic,
   Question,
@@ -13,11 +15,20 @@ import {
   CreateQuestionRequest,
   UpdateQuestionRequest,
   LinkQuestionRequest,
+  BulkQuestionImportResult,
+  WorkbookQuestionImportResult,
   PaginatedResponse,
   ApiResponse,
   UpdateUserRoleRequest,
-  ToggleUserStatusRequest
+  ToggleUserStatusRequest,
+  UpdateSubscriptionPlansRequest
 } from '../models/admin.models';
+
+interface UploadImageResponse {
+  url: string;
+  originalName: string;
+  size: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
@@ -55,6 +66,36 @@ export class AdminService {
   toggleUserStatus(userId: number, isActive: boolean): Observable<ApiResponse<void>> {
     const request: ToggleUserStatusRequest = { userId, isActive };
     return this.http.put<ApiResponse<void>>(`${this.apiUrl}/users/${userId}/status`, request);
+  }
+
+  getSubscriptionPurchases(
+    page: number = 1,
+    pageSize: number = 20,
+    searchQuery: string = '',
+    status: string = ''
+  ): Observable<ApiResponse<PaginatedResponse<AdminSubscriptionPurchase>>> {
+    let params = new HttpParams()
+      .set('page', page)
+      .set('pageSize', pageSize);
+
+    if (searchQuery.trim()) {
+      params = params.set('searchQuery', searchQuery.trim());
+    }
+
+    if (status.trim()) {
+      params = params.set('status', status.trim());
+    }
+
+    return this.http.get<ApiResponse<PaginatedResponse<AdminSubscriptionPurchase>>>(`${this.apiUrl}/subscriptions`, { params });
+  }
+
+  getSubscriptionPlans(): Observable<ApiResponse<AdminSubscriptionPlan[]>> {
+    return this.http.get<ApiResponse<AdminSubscriptionPlan[]>>(`${this.apiUrl}/subscription-plans`);
+  }
+
+  updateSubscriptionPlans(plans: AdminSubscriptionPlan[]): Observable<ApiResponse<AdminSubscriptionPlan[]>> {
+    const request: UpdateSubscriptionPlansRequest = { plans };
+    return this.http.put<ApiResponse<AdminSubscriptionPlan[]>>(`${this.apiUrl}/subscription-plans`, request);
   }
 
   // ===== Subject Management =====
@@ -129,6 +170,24 @@ export class AdminService {
 
   deleteQuestion(questionId: number): Observable<ApiResponse<void>> {
     return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/questions/${questionId}`);
+  }
+
+  uploadQuestionImage(file: File): Observable<ApiResponse<UploadImageResponse>> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<ApiResponse<UploadImageResponse>>(`${this.apiUrl}/questions/images/fake-upload`, formData);
+  }
+
+  bulkUploadQuestions(topicId: number, file: File): Observable<ApiResponse<BulkQuestionImportResult>> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<ApiResponse<BulkQuestionImportResult>>(`${this.apiUrl}/topics/${topicId}/questions/bulk-upload`, formData);
+  }
+
+  bulkUploadWorkbook(file: File): Observable<ApiResponse<WorkbookQuestionImportResult>> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<ApiResponse<WorkbookQuestionImportResult>>(`${this.apiUrl}/questions/workbook-import`, formData);
   }
 
   // ===== Link Question to Topic =====

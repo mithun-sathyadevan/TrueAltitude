@@ -14,6 +14,7 @@ public class LearningTopicNodeDto
     public string Id { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    public int QuestionCount { get; set; }
     public bool RequiresSubscription { get; set; }
     public string? SubscriptionLabel { get; set; }
     public List<LearningTopicNodeDto> Children { get; set; } = new();
@@ -24,6 +25,7 @@ public class LearningQuestionDto
 {
     public string Id { get; set; } = string.Empty;
     public string Text { get; set; } = string.Empty;
+    public string? AnswerImageUrl { get; set; }
     public string Explanation { get; set; } = string.Empty;
     public bool RequiresSubscription { get; set; }
     public string? SubscriptionLabel { get; set; }
@@ -77,4 +79,5 @@ public class ExamQuestionEvaluationDto
     public string CorrectOptionId { get; set; } = string.Empty;
     public string CorrectOptionText { get; set; } = string.Empty;
     public string Explanation { get; set; } = string.Empty;
+    public string? AnswerImageUrl { get; set; }
 }

@@ -2,7 +2,7 @@ import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../services/admin.service';
-import { Question, CreateQuestionRequest, UpdateQuestionRequest, Subject, Topic, LinkedTopic } from '../../models/admin.models';
+import { Question, CreateQuestionRequest, UpdateQuestionRequest, Subject, Topic, LinkedTopic, BulkQuestionImportResult, WorkbookQuestionImportResult } from '../../models/admin.models';
 
 @Component({
   selector: 'app-admin-questions',
@@ -27,10 +27,21 @@ export class AdminQuestionsComponent implements OnInit {
   totalQuestions = 0;
   searchQuery = '';
   appliedSearchQuery = '';
+  selectedAnswerImageFile: File | null = null;
+  uploadingAnswerImage = false;
+  bulkUploadSubjectId: number | null = null;
+  bulkUploadTopicId: number | null = null;
+  bulkUploadExcelFile: File | null = null;
+  bulkUploading = false;
+  bulkUploadResult: BulkQuestionImportResult | null = null;
+  workbookUploadExcelFile: File | null = null;
+  workbookUploading = false;
+  workbookUploadResult: WorkbookQuestionImportResult | null = null;
   
   formData: CreateQuestionRequest = {
     questionText: '',
     type: 'multiple_choice',
+    answerImageUrl: '',
     explanationText: '',
     difficulty: 1,
     options: [
@@ -107,6 +118,7 @@ export class AdminQuestionsComponent implements OnInit {
     this.formData = {
       questionText: question.questionText,
       type: question.type,
+      answerImageUrl: question.answerImageUrl || '',
       explanationText: question.explanationText,
       difficulty: question.difficulty,
       options: question.options.map(o => ({ optionText: o.optionText, isCorrect: o.isCorrect }))
@@ -119,6 +131,7 @@ export class AdminQuestionsComponent implements OnInit {
     this.formData = {
       questionText: '',
       type: 'multiple_choice',
+      answerImageUrl: '',
       explanationText: '',
       difficulty: 1,
       options: [
@@ -126,6 +139,126 @@ export class AdminQuestionsComponent implements OnInit {
         { optionText: '', isCorrect: false }
       ]
     };
+    this.selectedAnswerImageFile = null;
+    this.uploadingAnswerImage = false;
+  }
+
+  onAnswerImageFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const selectedFile = input.files?.[0] || null;
+    this.selectedAnswerImageFile = selectedFile;
+    this.cdr.markForCheck();
+  }
+
+  onBulkUploadSubjectChange(subjectId: number | null): void {
+    this.bulkUploadSubjectId = subjectId;
+    this.bulkUploadTopicId = null;
+    this.bulkUploadResult = null;
+
+    if (subjectId) {
+      this.loadTopicsForSubject(subjectId);
+    }
+
+    this.cdr.markForCheck();
+  }
+
+  onBulkExcelFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const selectedFile = input.files?.[0] || null;
+    this.bulkUploadExcelFile = selectedFile;
+    this.bulkUploadResult = null;
+    this.cdr.markForCheck();
+  }
+
+  onWorkbookExcelFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const selectedFile = input.files?.[0] || null;
+    this.workbookUploadExcelFile = selectedFile;
+    this.workbookUploadResult = null;
+    this.cdr.markForCheck();
+  }
+
+  uploadWorkbookQuestions(): void {
+    if (!this.workbookUploadExcelFile) {
+      alert('Please choose a workbook file first.');
+      return;
+    }
+
+    this.workbookUploading = true;
+    this.workbookUploadResult = null;
+    this.adminService.bulkUploadWorkbook(this.workbookUploadExcelFile).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.workbookUploadResult = response.data;
+          this.loadSubjects();
+          this.loadQuestions();
+        }
+        this.workbookUploading = false;
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Error uploading workbook:', error);
+        this.workbookUploading = false;
+        alert('Workbook upload failed. Please verify sheet headers and try again.');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  uploadBulkQuestions(): void {
+    if (!this.bulkUploadTopicId) {
+      alert('Please choose a topic for bulk upload.');
+      return;
+    }
+
+    if (!this.bulkUploadExcelFile) {
+      alert('Please choose an Excel file first.');
+      return;
+    }
+
+    this.bulkUploading = true;
+    this.bulkUploadResult = null;
+    this.adminService.bulkUploadQuestions(this.bulkUploadTopicId, this.bulkUploadExcelFile).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.bulkUploadResult = response.data;
+          this.loadQuestions();
+        }
+        this.bulkUploading = false;
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Error bulk uploading questions:', error);
+        this.bulkUploading = false;
+        alert('Bulk upload failed. Please verify the Excel format and try again.');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  uploadAnswerImage(): void {
+    if (!this.selectedAnswerImageFile) {
+      alert('Please choose an answer image first.');
+      return;
+    }
+
+    this.uploadingAnswerImage = true;
+    this.adminService.uploadQuestionImage(this.selectedAnswerImageFile).subscribe({
+      next: (response) => {
+        if (response.success && response.data?.url) {
+          this.formData.answerImageUrl = response.data.url;
+          this.selectedAnswerImageFile = null;
+        }
+        this.uploadingAnswerImage = false;
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Error uploading answer image:', error);
+        this.uploadingAnswerImage = false;
+        alert('Failed to upload answer image');
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   addOption(): void {

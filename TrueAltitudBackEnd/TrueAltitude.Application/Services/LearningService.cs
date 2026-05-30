@@ -8,6 +8,8 @@ public interface ILearningService
 {
     Task<List<LearningSubjectListItemDto>> GetSubjectsAsync();
     Task<LearningTopicNodeDto?> GetSubjectTreeAsync(string subjectCode);
+    Task<bool?> TopicRequiresSubscriptionAsync(string topicCode);
+    Task<List<LearningQuestionDto>?> GetTopicQuestionsAsync(string topicCode);
     Task<List<ExamQuestionDto>> GetRandomExamQuestionsAsync(List<string> subjectCodes, int count);
     Task<ExamEvaluationResultDto> EvaluateExamAnswersAsync(List<ExamQuestionRequestDto> questions, List<ExamAnswerDto> answers, int totalQuestions, bool includeExplanations);
 }
@@ -24,7 +26,12 @@ public class LearningService : ILearningService
     public async Task<List<LearningSubjectListItemDto>> GetSubjectsAsync()
     {
         var subjects = await _learningRepository.GetSubjectsAsync();
-        return subjects.Select(MapSubjectSummary).ToList();
+        return subjects
+            .OrderBy(subject => subject.RequiresSubscription)
+            .ThenBy(subject => subject.SortOrder)
+            .ThenBy(subject => subject.Id)
+            .Select(MapSubjectSummary)
+            .ToList();
     }
 
     public async Task<LearningTopicNodeDto?> GetSubjectTreeAsync(string subjectCode)
@@ -38,18 +45,9 @@ public class LearningService : ILearningService
         var topics = await _learningRepository.GetTopicsBySubjectIdAsync(subject.Id);
         var topicIds = topics.Select(t => t.Id).ToList();
         var topicQuestions = await _learningRepository.GetTopicQuestionsAsync(topicIds);
-        var questionIds = topicQuestions.Select(tq => tq.QuestionId).Distinct().ToList();
-        var options = await _learningRepository.GetOptionsByQuestionIdsAsync(questionIds);
-
-        var optionsByQuestionId = options
-            .GroupBy(o => o.QuestionId)
-            .ToDictionary(g => g.Key, g => g.Select(MapOption).ToList());
-
-        var questionsByTopicId = topicQuestions
+        var questionCountByTopicId = topicQuestions
             .GroupBy(tq => tq.TopicId)
-            .ToDictionary(
-                g => g.Key,
-                g => g.Select(tq => MapQuestion(tq.Question, optionsByQuestionId)).ToList());
+            .ToDictionary(g => g.Key, g => g.Count());
 
         var rootTopics = topics
             .Where(t => !t.ParentTopicId.HasValue)
@@ -65,13 +63,46 @@ public class LearningService : ILearningService
             Id = subject.Code,
             Title = subject.Title,
             Description = subject.Description,
+            QuestionCount = 0,
             RequiresSubscription = subject.RequiresSubscription,
             SubscriptionLabel = subject.SubscriptionLabel,
             Questions = new List<LearningQuestionDto>(),
-            Children = BuildTopicTree(rootTopics, topicsByParentId, questionsByTopicId)
+            Children = BuildTopicTree(rootTopics, topicsByParentId, questionCountByTopicId)
         };
 
         return root;
+    }
+
+    public async Task<bool?> TopicRequiresSubscriptionAsync(string topicCode)
+    {
+        var topic = await _learningRepository.GetTopicByCodeAsync(topicCode);
+        if (topic == null)
+        {
+            return null;
+        }
+
+        return topic.RequiresSubscription;
+    }
+
+    public async Task<List<LearningQuestionDto>?> GetTopicQuestionsAsync(string topicCode)
+    {
+        var topic = await _learningRepository.GetTopicByCodeAsync(topicCode);
+        if (topic == null)
+        {
+            return null;
+        }
+
+        var topicQuestions = await _learningRepository.GetTopicQuestionsByTopicIdAsync(topic.Id);
+        var questionIds = topicQuestions.Select(tq => tq.QuestionId).Distinct().ToList();
+        var options = await _learningRepository.GetOptionsByQuestionIdsAsync(questionIds);
+
+        var optionsByQuestionId = options
+            .GroupBy(o => o.QuestionId)
+            .ToDictionary(g => g.Key, g => g.Select(MapOption).ToList());
+
+        return topicQuestions
+            .Select(tq => MapQuestion(tq.Question, optionsByQuestionId))
+            .ToList();
     }
 
     public async Task<List<ExamQuestionDto>> GetRandomExamQuestionsAsync(List<string> subjectCodes, int count)
@@ -133,7 +164,8 @@ public class LearningService : ILearningService
                     IsAnswered = false,
                     CorrectOptionId = string.Empty,
                     CorrectOptionText = string.Empty,
-                    Explanation = string.Empty
+                    Explanation = string.Empty,
+                    AnswerImageUrl = null
                 };
             }
 
@@ -154,7 +186,8 @@ public class LearningService : ILearningService
                 IsAnswered = isAnswered,
                 CorrectOptionId = correctOption?.Code ?? string.Empty,
                 CorrectOptionText = correctOption?.Text ?? string.Empty,
-                Explanation = includeExplanations ? (correctOption?.Explanation ?? string.Empty) : string.Empty
+                Explanation = includeExplanations ? (correctOption?.Explanation ?? string.Empty) : string.Empty,
+                AnswerImageUrl = question.AnswerImageUrl
             };
         }).ToList();
 
@@ -174,7 +207,7 @@ public class LearningService : ILearningService
     private static List<LearningTopicNodeDto> BuildTopicTree(
         IEnumerable<LearningTopic> topics,
         Dictionary<int, List<LearningTopic>> topicsByParentId,
-        Dictionary<int, List<LearningQuestionDto>> questionsByTopicId)
+        Dictionary<int, int> questionCountByTopicId)
     {
         return topics
             .Select(topic => new LearningTopicNodeDto
@@ -182,13 +215,14 @@ public class LearningService : ILearningService
                 Id = topic.Code,
                 Title = topic.Title,
                 Description = topic.Description,
+                QuestionCount = questionCountByTopicId.TryGetValue(topic.Id, out var count)
+                    ? count
+                    : 0,
                 RequiresSubscription = topic.RequiresSubscription,
                 SubscriptionLabel = topic.SubscriptionLabel,
-                Questions = questionsByTopicId.TryGetValue(topic.Id, out var questions)
-                    ? questions
-                    : new List<LearningQuestionDto>(),
+                Questions = new List<LearningQuestionDto>(),
                 Children = topicsByParentId.TryGetValue(topic.Id, out var children)
-                    ? BuildTopicTree(children, topicsByParentId, questionsByTopicId)
+                    ? BuildTopicTree(children, topicsByParentId, questionCountByTopicId)
                     : new List<LearningTopicNodeDto>()
             })
             .ToList();
@@ -214,6 +248,7 @@ public class LearningService : ILearningService
         {
             Id = question.Code,
             Text = question.Text,
+            AnswerImageUrl = question.AnswerImageUrl,
             Explanation = question.ExplanationText ?? string.Empty,
             RequiresSubscription = question.RequiresSubscription,
             SubscriptionLabel = question.SubscriptionLabel,

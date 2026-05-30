@@ -1,9 +1,8 @@
-import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { firstValueFrom, timeout } from 'rxjs';
 
-import { ExamEvaluationResponse, ExamQuestion, TopicNode } from '../models/learning.models';
-import { AuthService } from './auth.service';
+import { ExamEvaluationResponse, ExamQuestion, TopicNode, TopicQuestion } from '../models/learning.models';
 
 @Injectable({ providedIn: 'root' })
 export class LearningDataService {
@@ -14,19 +13,16 @@ export class LearningDataService {
   private subjectListCache: TopicNode[] | null = null;
   private readonly subjectDetailCache = new Map<string, TopicNode>();
 
-  constructor(
-    private readonly http: HttpClient,
-    private readonly authService: AuthService,
-  ) {}
+  constructor(private readonly http: HttpClient) {}
 
-  async getSubjects(): Promise<TopicNode[]> {
+  async getSubjects(): Promise<TopicNode[] | undefined> {
     if (this.subjectListCache !== null) {
       return this.deepClone(this.subjectListCache);
     }
 
     const subjects = await this.getWithRetry<TopicNode[]>(`${this.apiUrl}/subjects`);
     if (!subjects) {
-      return [];
+      return undefined;
     }
 
     this.subjectListCache = subjects.map((subject) => this.normalizeTopic(subject));
@@ -44,6 +40,33 @@ export class LearningDataService {
     return this.deepClone(normalized);
   }
 
+  async getTopicQuestions(topicId: string): Promise<TopicQuestion[] | undefined> {
+    try {
+      const result = await firstValueFrom(
+        this.http
+          .get<TopicQuestion[]>(`${this.apiUrl}/topics/${encodeURIComponent(topicId)}/questions`)
+          .pipe(timeout(this.requestTimeoutMs)),
+      );
+
+      return result.map((question) => {
+        const rawQuestion = question as any;
+        return {
+          ...question,
+          explanation: question.explanation || rawQuestion.explanationText || '',
+          answerImageUrl: question.answerImageUrl || rawQuestion.answerImageURL || '',
+          options: question.options || [],
+        };
+      });
+    } catch (err) {
+      if (err instanceof HttpErrorResponse && err.status === 403) {
+        throw new Error('TOPIC_PREMIUM_FORBIDDEN');
+      }
+
+      console.error('[LearningDataService] getTopicQuestions failed:', err);
+      return undefined;
+    }
+  }
+
   findInitialTopic(topics: TopicNode[], fallback: TopicNode): TopicNode {
     const firstTopic = topics[0];
     if (!firstTopic) {
@@ -54,8 +77,6 @@ export class LearningDataService {
   }
 
   async getExamQuestions(subjectCodes: string[]): Promise<ExamQuestion[] | undefined> {
-    const headers = this.createAuthHeaders();
-
     try {
       console.log('[LearningDataService] getExamQuestions - requesting:', { subjectCodes, count: 10 });
       const result = await firstValueFrom(
@@ -63,13 +84,16 @@ export class LearningDataService {
           .post<ExamQuestion[]>(
             `${this.apiUrl}/exam/questions`,
             { subjectCodes, count: 10 },
-            { headers },
           )
           .pipe(timeout(this.requestTimeoutMs)),
       );
       console.log('[LearningDataService] getExamQuestions - response:', result);
       return result;
     } catch (err) {
+      if (err instanceof HttpErrorResponse && err.status === 403) {
+        throw new Error('EXAM_PREMIUM_FORBIDDEN');
+      }
+
       console.error('[LearningDataService] getExamQuestions failed:', err);
       return undefined;
     }
@@ -81,7 +105,6 @@ export class LearningDataService {
     totalQuestions: number,
     includeExplanations: boolean,
   ): Promise<ExamEvaluationResponse | undefined> {
-    const headers = this.createAuthHeaders();
     const questions = questionIds.map((questionId) => ({ questionId }));
     const answers = Object.entries(selectedAnswers).map(([questionId, optionId]) => ({ questionId, optionId }));
 
@@ -91,31 +114,27 @@ export class LearningDataService {
           .post<ExamEvaluationResponse>(
             `${this.apiUrl}/exam/evaluate`,
             { questions, answers, totalQuestions, includeExplanations },
-            { headers },
           )
           .pipe(timeout(this.requestTimeoutMs)),
       );
     } catch (err) {
+      if (err instanceof HttpErrorResponse && err.status === 403) {
+        throw new Error('EXAM_PREMIUM_FORBIDDEN');
+      }
+
       console.error('[LearningDataService] evaluateExamAnswers failed:', err);
       return undefined;
     }
-  }
-
-  private createAuthHeaders(): HttpHeaders | undefined {
-    const token = this.authService.getAuthToken();
-    return token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : undefined;
   }
 
   private async getWithRetry<T>(url: string): Promise<T | undefined> {
     let lastError: unknown;
 
     for (let attempt = 1; attempt <= this.maxRequestAttempts; attempt++) {
-      const headers = this.createAuthHeaders();
-
       try {
         return await firstValueFrom(
           this.http
-            .get<T>(url, { headers })
+            .get<T>(url)
             .pipe(timeout(this.requestTimeoutMs)),
         );
       } catch (err) {
@@ -155,11 +174,13 @@ export class LearningDataService {
     return {
       ...topic,
       children: (topic.children || []).map((child) => this.normalizeTopic(child)),
+      questionCount: topic.questionCount ?? topic.questions?.length ?? 0,
       questions: (topic.questions || []).map((question) => {
         const rawQuestion = question as any;
         return {
           ...question,
           explanation: question.explanation || rawQuestion.explanationText || '',
+          answerImageUrl: question.answerImageUrl || rawQuestion.answerImageURL || '',
           options: question.options || [],
         };
       }),

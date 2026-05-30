@@ -1,0 +1,59 @@
+<div class="admin-plans">
+  <h1>Subscription Plans</h1>
+  <p class="description">Manage the plans available to users in the subscription page and payment flow.</p>
+
+  <div class="actions-row">
+    <button type="button" class="secondary-btn" (click)="addPlan()">Add Plan</button>
+    <button type="button" class="primary-btn" (click)="savePlans()" [disabled]="saving || loading">
+      {{ saving ? 'Saving...' : 'Save Changes' }}
+    </button>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert error">{{ errorMessage }}</div>
+  <div *ngIf="successMessage" class="alert success">{{ successMessage }}</div>
+
+  <div class="plans-table-container" *ngIf="!loading; else loadingTemplate">
+    <table class="plans-table">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Name</th>
+          <th>Price (Paise)</th>
+          <th>Duration (Days)</th>
+          <th>Description</th>
+          <th>Popular</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let plan of plans; let i = index; trackBy: trackByIndex">
+          <td>
+            <input type="text" [(ngModel)]="plan.code" placeholder="plan_monthly" />
+          </td>
+          <td>
+            <input type="text" [(ngModel)]="plan.name" placeholder="Monthly" />
+          </td>
+          <td>
+            <input type="number" [(ngModel)]="plan.priceInPaise" min="1" />
+          </td>
+          <td>
+            <input type="number" [(ngModel)]="plan.durationDays" min="1" />
+          </td>
+          <td>
+            <input type="text" [(ngModel)]="plan.description" placeholder="Plan description" />
+          </td>
+          <td class="checkbox-cell">
+            <input type="checkbox" [(ngModel)]="plan.isPopular" />
+          </td>
+          <td>
+            <button type="button" class="danger-btn" (click)="removePlan(i)">Remove</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <ng-template #loadingTemplate>
+    <div class="loading">Loading plans...</div>
+  </ng-template>
+</div>

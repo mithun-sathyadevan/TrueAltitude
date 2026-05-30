@@ -11,7 +11,9 @@ public interface ILearningRepository
     Task<int> GetTopicCountBySubjectIdAsync(int subjectId);
     Task<List<LearningTopic>> GetTopicsBySubjectIdAsync(int subjectId);
     Task<LearningTopic?> GetTopicByIdAsync(int topicId);
+    Task<LearningTopic?> GetTopicByCodeAsync(string topicCode);
     Task<List<LearningTopicQuestion>> GetTopicQuestionsAsync(List<int> topicIds);
+    Task<List<LearningTopicQuestion>> GetTopicQuestionsByTopicIdAsync(int topicId);
     Task<List<LearningQuestionOption>> GetOptionsByQuestionIdsAsync(List<int> questionIds);
     Task<List<LearningQuestion>> GetQuestionsByCodesWithOptionsAsync(List<string> questionCodes);
     Task<List<LearningQuestion>> GetRandomQuestionsBySubjectCodesAsync(List<string> subjectCodes, int count);

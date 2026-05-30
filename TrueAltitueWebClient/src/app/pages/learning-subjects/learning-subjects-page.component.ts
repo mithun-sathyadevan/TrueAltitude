@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import { TopicNode } from '../../models/learning.models';
+import { AuthService } from '../../services/auth.service';
 import { LearningDataService } from '../../services/learning-data.service';
 import { SubscriptionAccessService } from '../../services/subscription-access.service';
 
@@ -22,6 +23,7 @@ export class LearningSubjectsPageComponent implements OnInit {
 
   constructor(
     private readonly learningDataService: LearningDataService,
+    private readonly authService: AuthService,
     private readonly subscriptionAccessService: SubscriptionAccessService,
     private readonly router: Router,
     private readonly cdr: ChangeDetectorRef,
@@ -33,8 +35,15 @@ export class LearningSubjectsPageComponent implements OnInit {
 
     try {
       const subjects = await this.learningDataService.getSubjects();
+      if (!subjects) {
+        this.loadError = 'Session expired. Please login again.';
+        this.authService.logout();
+        void this.router.navigate(['/login'], { queryParams: { returnUrl: '/learning/subjects' } });
+        return;
+      }
+
       if (!subjects.length) {
-        this.loadError = 'Could not load subjects from database.';
+        this.loadError = 'No subjects found in database.';
       }
 
       this.subjects = subjects;
@@ -42,7 +51,9 @@ export class LearningSubjectsPageComponent implements OnInit {
       this.cdr.detectChanges();
     } catch (err) {
       console.error('[LearningSubjectsPageComponent] ngOnInit failed:', err);
-      this.loadError = 'Could not load subjects from database.';
+      this.loadError = 'Session expired. Please login again.';
+      this.authService.logout();
+      void this.router.navigate(['/login'], { queryParams: { returnUrl: '/learning/subjects' } });
     } finally {
       this.loading = false;
       this.cdr.detectChanges();

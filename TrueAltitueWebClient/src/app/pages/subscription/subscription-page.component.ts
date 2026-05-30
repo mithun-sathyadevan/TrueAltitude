@@ -1,6 +1,6 @@
-import { CommonModule, CurrencyPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
 import { SubscriptionPlan, SubscriptionService } from '../../services/subscription.service';
@@ -15,7 +15,7 @@ declare global {
 @Component({
   selector: 'app-subscription-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, CurrencyPipe, TopHeaderComponent],
+  imports: [CommonModule, RouterLink, TopHeaderComponent],
   templateUrl: './subscription-page.component.html',
   styleUrl: './subscription-page.component.scss'
 })
@@ -28,7 +28,8 @@ export class SubscriptionPageComponent implements OnInit {
 
   constructor(
     private readonly subscriptionService: SubscriptionService,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
+    private readonly router: Router,
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -72,8 +73,8 @@ export class SubscriptionPageComponent implements OnInit {
     });
   }
 
-  protected priceInInr(priceInPaise: number): number {
-    return Math.round(priceInPaise / 100);
+  protected priceInPaiseDisplay(priceInPaise: number): number {
+    return priceInPaise;
   }
 
   async onBuyPlan(plan: SubscriptionPlan): Promise<void> {
@@ -152,6 +153,7 @@ export class SubscriptionPageComponent implements OnInit {
 
     this.message.set(result.message || 'Subscription activated successfully.');
     this.busyPlanCode.set('');
+    await this.router.navigate(['/']);
   }
 
   private async loadPlans(): Promise<void> {

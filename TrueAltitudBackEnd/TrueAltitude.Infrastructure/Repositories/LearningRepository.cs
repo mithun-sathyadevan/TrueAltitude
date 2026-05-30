@@ -188,6 +188,24 @@ public class LearningRepository : ILearningRepository
             .FirstOrDefaultAsync(t => t.Id == topicId);
     }
 
+    public async Task<LearningTopic?> GetTopicByCodeAsync(string topicCode)
+    {
+        return await _context.LearningTopics
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Code == topicCode);
+    }
+
+    public async Task<List<LearningTopicQuestion>> GetTopicQuestionsByTopicIdAsync(int topicId)
+    {
+        return await _context.LearningTopicQuestions
+            .AsNoTracking()
+            .Include(tq => tq.Question)
+            .Where(tq => tq.TopicId == topicId)
+            .OrderBy(tq => tq.SortOrder)
+            .ThenBy(tq => tq.QuestionId)
+            .ToListAsync();
+    }
+
     public async Task<LearningQuestion?> GetQuestionByIdWithOptionsAsync(int questionId)
     {
         return await _context.LearningQuestions

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { TopicNode, TopicQuestion, TopicQuestionOption } from '../../models/learning.models';
@@ -12,6 +12,12 @@ import { SubscriptionAccessService } from '../../services/subscription-access.se
 })
 export class TopicQuizComponent {
   @Input() topic: TopicNode | null = null;
+  @Input() loadingQuestions = false;
+  @Input() loadError = '';
+  @Input() showNextTopicNavigation = false;
+  @Input() hasNextTopic = false;
+  @Input() nextTopicTitle: string | null = null;
+  @Output() nextTopicRequested = new EventEmitter<void>();
 
   protected selectedAnswers: Record<string, string> = {};
 
@@ -54,5 +60,13 @@ export class TopicQuizComponent {
 
   protected hasQuestions(): boolean {
     return !!this.topic?.questions?.length;
+  }
+
+  protected onNextTopic(): void {
+    if (!this.hasNextTopic) {
+      return;
+    }
+
+    this.nextTopicRequested.emit();
   }
 }
