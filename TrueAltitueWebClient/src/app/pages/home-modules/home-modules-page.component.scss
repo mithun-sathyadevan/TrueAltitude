@@ -1,9 +1,29 @@
 .home-modules-page {
   padding: 20px;
+  position: relative;
 }
 
-.intro {
-  margin-bottom: 14px;
+.home-modules-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, #f8fbff 0%, #f8fafc 45%, #eef4fb 100%);
+}
+
+.hero-panel {
+  margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.9fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.hero-copy {
+  display: grid;
+  gap: 8px;
+  align-content: start;
 }
 
 .intro-kicker {
@@ -21,10 +41,38 @@
   margin-bottom: 8px;
 }
 
-.intro p {
+.hero-copy p {
   margin-bottom: 0;
   max-width: 62ch;
   line-height: 1.55;
+  color: var(--text-dim);
+}
+
+.hero-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.metric-card {
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--accent-blue) 14%, var(--border-color) 86%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 246, 253, 0.92));
+  padding: 16px 14px;
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+}
+
+.metric-card strong {
+  font-size: 1.35rem;
+  color: var(--accent-blue);
+}
+
+.metric-card span {
+  font-size: 0.9rem;
+  color: var(--text-dim);
 }
 
 .card-grid {
@@ -39,20 +87,33 @@
   display: grid;
   gap: 8px;
   transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.module-card::after {
+  content: '';
+  position: absolute;
+  inset: auto -20% -30% auto;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.1) 0%, rgba(37, 99, 235, 0) 70%);
+  pointer-events: none;
 }
 
 .module-card:hover {
   transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--accent-blue) 70%, white 30%);
-  background-color: color-mix(in srgb, var(--accent-blue) 10%, var(--card-bg) 90%);
+  border-color: color-mix(in srgb, var(--accent-blue) 48%, var(--border-color) 52%);
+  background-color: color-mix(in srgb, var(--accent-blue) 4%, var(--card-bg) 96%);
 }
 
 .icon {
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  background: color-mix(in srgb, var(--accent-blue) 18%, transparent 82%);
-  border: 1px solid color-mix(in srgb, var(--accent-blue) 55%, transparent 45%);
+  background: color-mix(in srgb, var(--accent-blue) 12%, white 88%);
+  border: 1px solid color-mix(in srgb, var(--accent-blue) 28%, var(--border-color) 72%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -79,8 +140,22 @@
   cursor: not-allowed;
 }
 
+@media (max-width: 1100px) {
+  .hero-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 900px) {
   .card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-metrics {
     grid-template-columns: 1fr;
   }
 }

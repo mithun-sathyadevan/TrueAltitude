@@ -3,6 +3,28 @@ header {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 40px;
+  gap: 16px;
+}
+
+.brand-block {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.brand-link {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  text-decoration: none;
+}
+
+.brand-link img {
+  display: block;
+  width: 84px;
+  height: auto;
+  object-fit: contain;
 }
 
 .header-actions {
@@ -13,9 +35,9 @@ header {
 
 .login-btn {
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--accent-blue) 70%, white 30%);
-  background: color-mix(in srgb, var(--accent-blue) 18%, transparent 82%);
-  color: var(--text-main);
+  border: 1px solid color-mix(in srgb, var(--accent-blue) 34%, var(--border-color) 66%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent-blue) 10%, white 90%), white);
+  color: var(--accent-blue);
   text-decoration: none;
   padding: 7px 12px;
   font-size: 0.86rem;
@@ -25,7 +47,7 @@ header {
 .logout-btn {
   border-radius: 999px;
   border: 1px solid var(--border-color);
-  background: transparent;
+  background: white;
   color: var(--text-main);
   padding: 7px 12px;
   font-size: 0.82rem;
@@ -40,7 +62,7 @@ header {
 
 .user-profile img {
   border-radius: 50%;
-  border: 2px solid var(--accent-blue);
+  border: 2px solid color-mix(in srgb, var(--accent-blue) 35%, white 65%);
   width: 40px;
   height: 40px;
   object-fit: cover;
@@ -52,6 +74,10 @@ header {
     align-items: flex-start;
     gap: 12px;
     margin-bottom: 24px;
+  }
+
+  .brand-block {
+    width: 100%;
   }
 
   .header-actions {

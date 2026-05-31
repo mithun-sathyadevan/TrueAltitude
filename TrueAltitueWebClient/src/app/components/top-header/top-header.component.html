@@ -1,5 +1,11 @@
 <header>
-  <h1>{{ greeting }}</h1>
+  <div class="brand-block">
+    <a class="brand-link" routerLink="/" aria-label="True Altitude home">
+      <img [src]="logoUrl" alt="True Altitude logo" />
+    </a>
+
+    <h1>{{ greeting }}</h1>
+  </div>
 
   <div class="header-actions">
     @if (isLoggedIn()) {

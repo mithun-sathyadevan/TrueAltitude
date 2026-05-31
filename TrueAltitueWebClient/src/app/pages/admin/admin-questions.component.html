@@ -36,7 +36,7 @@
           <div class="sheet-stats">
             Rows {{ topicResult.totalRows }} | Processed {{ topicResult.processedRows }} | Linked {{ topicResult.linkedToTopic }} | Skipped {{ topicResult.skippedRows }}
           </div>
-          <ul class="sheet-errors" *ngIf="topicResult.errors?.length">
+          <ul class="sheet-errors" *ngIf="topicResult.errors.length">
             <li *ngFor="let err of topicResult.errors">{{ err }}</li>
           </ul>
         </div>
@@ -88,7 +88,7 @@
       <div><strong>Already Linked:</strong> {{ bulkUploadResult.alreadyLinked }}</div>
       <div><strong>Skipped:</strong> {{ bulkUploadResult.skippedRows }}</div>
 
-      <div *ngIf="bulkUploadResult.errors?.length" class="bulk-errors">
+      <div *ngIf="bulkUploadResult.errors.length" class="bulk-errors">
         <strong>Row Errors:</strong>
         <ul>
           <li *ngFor="let err of bulkUploadResult.errors">{{ err }}</li>
