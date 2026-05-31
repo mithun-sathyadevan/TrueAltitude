@@ -64,8 +64,13 @@ export class LearningPageComponent {
       }
 
       this.selectedSubject = subject;
-      this.selectedTopic = null;
+      this.selectedTopic = this.getInitialTopic(subject);
       this.topicQuestionLoadError = '';
+
+      if (this.selectedTopic) {
+        await this.ensureTopicQuestionsLoaded(this.selectedTopic);
+      }
+
       this.cdr.detectChanges();
     } finally {
       this.loading = false;
@@ -208,6 +213,15 @@ export class LearningPageComponent {
     }
 
     return flattened;
+  }
+
+  private getInitialTopic(subject: TopicNode): TopicNode | null {
+    const leafTopics = this.flattenLeafTopics(subject.children || []);
+    if (leafTopics.length > 0) {
+      return leafTopics[0];
+    }
+
+    return subject.questions?.length ? subject : null;
   }
 
   private scrollToTopicTop(): void {

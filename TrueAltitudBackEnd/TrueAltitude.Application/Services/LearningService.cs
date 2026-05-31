@@ -264,7 +264,8 @@ public class LearningService : ILearningService
         {
             Id = option.Code,
             Text = option.Text,
-            IsCorrect = option.IsCorrect
+            IsCorrect = option.IsCorrect,
+            Explanation = option.Explanation ?? string.Empty
         };
     }
 }

@@ -25,6 +25,7 @@ export class SubscriptionPageComponent implements OnInit {
   readonly busyPlanCode = signal('');
   readonly message = signal('');
   readonly error = signal('');
+  protected readonly paymentsEnabled = false;
 
   constructor(
     private readonly subscriptionService: SubscriptionService,
@@ -78,6 +79,12 @@ export class SubscriptionPageComponent implements OnInit {
   }
 
   async onBuyPlan(plan: SubscriptionPlan): Promise<void> {
+    if (!this.paymentsEnabled) {
+      this.error.set('Payments are temporarily unavailable. Please try again later.');
+      this.message.set('');
+      return;
+    }
+
     this.error.set('');
     this.message.set('');
     this.busyPlanCode.set(plan.code);

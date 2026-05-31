@@ -48,7 +48,12 @@
             @if (getSelectedOption(question); as selectedOption) {
               <div class="result" [class.pass]="selectedOption.isCorrect" [class.fail]="!selectedOption.isCorrect">
                 <strong>{{ selectedOption.isCorrect ? 'Pass' : 'Fail' }}</strong>
-                <p>{{ getQuestionExplanation(question) }}</p>
+                @if (!selectedOption.isCorrect && getCorrectAnswerText(question)) {
+                  <p><strong>Correct answer:</strong> {{ getCorrectAnswerText(question) }}</p>
+                }
+                @if (getQuestionExplanation(question)) {
+                  <p>{{ getQuestionExplanation(question) }}</p>
+                }
                 @if (question.answerImageUrl) {
                   <div class="answer-media">
                     <img [src]="question.answerImageUrl" alt="Answer reference" loading="lazy" decoding="async" />

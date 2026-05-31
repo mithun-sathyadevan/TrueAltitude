@@ -38,6 +38,10 @@
   @if (loading()) {
     <section class="surface-card loading-state">Loading subscription plans...</section>
   } @else {
+    @if (!paymentsEnabled) {
+      <div class="banner error">Payments are temporarily unavailable.</div>
+    }
+
     <section class="plans-grid">
       @for (plan of plans(); track plan.code) {
         <article class="surface-card plan-card" [class.popular]="plan.isPopular">
@@ -58,9 +62,9 @@
           <button
             type="button"
             class="buy-btn"
-            [disabled]="busyPlanCode() === plan.code"
+            [disabled]="!paymentsEnabled || busyPlanCode() === plan.code"
             (click)="onBuyPlan(plan)">
-            {{ busyPlanCode() === plan.code ? 'Processing...' : 'Buy Plan' }}
+            {{ busyPlanCode() === plan.code ? 'Processing...' : (paymentsEnabled ? 'Buy Plan' : 'Temporarily Unavailable') }}
           </button>
         </article>
       }

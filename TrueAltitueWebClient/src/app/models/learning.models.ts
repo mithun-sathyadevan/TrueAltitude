@@ -2,6 +2,7 @@ export interface TopicQuestionOption {
   id: string;
   text: string;
   isCorrect: boolean;
+  explanation?: string;
 }
 
 export interface TopicQuestion {

@@ -1143,7 +1143,7 @@ public class AdminController : ControllerBase
                 QuestionText = questionText,
                 Type = string.IsNullOrWhiteSpace(type) ? "multiple_choice" : type,
                 Difficulty = difficulty <= 0 ? 1 : difficulty,
-                ExplanationText = GetCellValue(worksheet, row, FindColumn(columnMap, "explanation", "explanationtext", "solution")),
+                ExplanationText = GetCellValue(worksheet, row, FindColumn(columnMap, "explanation", "explanationtext", "solution", "notes", "note")),
                 AnswerImageUrl = GetCellValue(worksheet, row, FindColumn(columnMap, "answerimageurl", "imageurl", "image", "questionimageurl")),
                 CorrectOption = GetCellValue(worksheet, row, FindColumn(columnMap, "correctoption", "correctanswer", "answer", "correct")),
                 Options = options

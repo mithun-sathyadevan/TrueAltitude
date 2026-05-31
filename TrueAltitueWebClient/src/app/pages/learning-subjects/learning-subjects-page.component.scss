@@ -22,6 +22,7 @@
   margin-bottom: 10px;
   border: 1px solid var(--border-color);
   border-radius: 10px;
+  background: rgba(255, 255, 255, 0.92);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -51,13 +52,15 @@
 
 .subject-row {
   border: 1px solid var(--border-color);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--card-bg) 80%, #0b1120 20%);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
   color: var(--text-main);
-  padding: 8px 10px;
+  padding: 12px 14px;
   display: grid;
-  gap: 4px;
+  gap: 6px;
   text-decoration: none;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .subject-top-row {
@@ -68,19 +71,23 @@
 }
 
 .subject-row:hover {
-  border-color: var(--accent-blue);
-  background: color-mix(in srgb, var(--accent-blue) 14%, transparent 86%);
+  border-color: color-mix(in srgb, var(--accent-blue) 40%, var(--border-color) 60%);
+  background: color-mix(in srgb, var(--accent-blue) 5%, white 95%);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.1);
 }
 
 .subject-row.locked {
-  opacity: 0.8;
+  opacity: 1;
   cursor: pointer;
   border-style: dashed;
+  background: linear-gradient(180deg, #fffdf5 0%, #fffaf0 100%);
 }
 
 .subject-row.locked:hover {
   border-color: color-mix(in srgb, #facc15 40%, var(--border-color) 60%);
-  background: color-mix(in srgb, #facc15 8%, transparent 92%);
+  background: color-mix(in srgb, #facc15 10%, white 90%);
+  box-shadow: 0 12px 24px rgba(250, 204, 21, 0.12);
 }
 
 .subscription-badge {
@@ -96,7 +103,13 @@
 
 .subject-row span {
   color: var(--text-dim);
-  font-size: 0.84rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.subject-row strong {
+  font-size: 1rem;
+  color: #0f172a;
 }
 
 .empty-subjects {

@@ -162,7 +162,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:4200", "http://localhost:3000")
+        policy.WithOrigins("http://localhost:4200", "https://www.truealtitude.in")
               .AllowAnyMethod()
               .AllowAnyHeader();
     });

@@ -42,8 +42,16 @@ export class TopicQuizComponent {
     return question.options.find((option) => option.id === selectedOptionId);
   }
 
+  protected getCorrectOption(question: TopicQuestion): TopicQuestionOption | undefined {
+    return question.options.find((option) => option.isCorrect);
+  }
+
   protected getQuestionExplanation(question: TopicQuestion): string {
-    return question.explanation || '';
+    return question.explanation || this.getCorrectOption(question)?.explanation || '';
+  }
+
+  protected getCorrectAnswerText(question: TopicQuestion): string {
+    return this.getCorrectOption(question)?.text || '';
   }
 
   protected isQuestionLocked(question: TopicQuestion): boolean {
