@@ -1,12 +1,13 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { firstValueFrom, timeout } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 import { ExamEvaluationResponse, ExamQuestion, TopicNode, TopicQuestion } from '../models/learning.models';
 
 @Injectable({ providedIn: 'root' })
 export class LearningDataService {
-  private readonly apiUrl = 'http://localhost:5137/api/learning';
+  private readonly apiUrl = `${environment.apiBaseUrl}/api/learning`;
   private readonly requestTimeoutMs = 10000;
   private readonly requestRetryDelayMs = 400;
   private readonly maxRequestAttempts = 2;

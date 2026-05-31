@@ -24,7 +24,6 @@ public class SubscriptionController : ControllerBase
     }
 
     [HttpGet("plans")]
-    [AllowAnonymous]
     public async Task<IActionResult> GetPlans()
     {
         var plans = await _subscriptionService.GetPlansAsync();
@@ -60,7 +59,6 @@ public class SubscriptionController : ControllerBase
     }
 
     [HttpPost("webhook")]
-    [AllowAnonymous]
     public async Task<IActionResult> RazorpayWebhook()
     {
         using var reader = new StreamReader(Request.Body);

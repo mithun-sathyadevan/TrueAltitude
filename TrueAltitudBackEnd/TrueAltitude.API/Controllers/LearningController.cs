@@ -19,7 +19,6 @@ public class LearningController : ControllerBase
     }
 
     [HttpGet("subjects")]
-    [AllowAnonymous]
     public async Task<IActionResult> GetSubjects()
     {
         var subjects = await _learningService.GetSubjectsAsync();
@@ -27,7 +26,6 @@ public class LearningController : ControllerBase
     }
 
     [HttpGet("subjects/{subjectCode}")]
-    [AllowAnonymous]
     public async Task<IActionResult> GetSubjectByCode(string subjectCode)
     {
         var subject = await _learningService.GetSubjectTreeAsync(subjectCode);
@@ -40,7 +38,6 @@ public class LearningController : ControllerBase
     }
 
     [HttpGet("topics/{topicCode}/questions")]
-    [AllowAnonymous]
     public async Task<IActionResult> GetTopicQuestions(string topicCode)
     {
         var hasPremiumAccess = UserHasPremiumAccess();

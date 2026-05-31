@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { environment } from '../../environments/environment';
 
 import { AuthService, AuthUser } from './auth.service';
 
@@ -32,7 +33,7 @@ export interface VerifySubscriptionResponse {
 
 @Injectable({ providedIn: 'root' })
 export class SubscriptionService {
-  private readonly apiUrl = 'http://localhost:5137/api/subscription';
+  private readonly apiUrl = `${environment.apiBaseUrl}/api/subscription`;
 
   constructor(
     private readonly http: HttpClient,

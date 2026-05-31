@@ -1,6 +1,7 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { LOADER_MODE } from '../interceptors/loading.interceptor';
+import { environment } from '../../environments/environment';
 
 export interface AuthUser {
   id?: number;
@@ -59,7 +60,7 @@ export class AuthService {
   private readonly refreshTokenStorageKey = 'truealtitude.refreshToken';
   private readonly refreshTokenExpiryStorageKey = 'truealtitude.refreshTokenExpiry';
   private readonly legacyStorageKey = 'truealtitude.isLoggedIn';
-  private readonly apiUrl = 'http://localhost:5137/api/auth';
+  private readonly apiUrl = `${environment.apiBaseUrl}/api/auth`;
   private readonly userSignal = signal<AuthUser | null>(this.readInitialAuthState());
 
   readonly currentUser = this.userSignal.asReadonly();

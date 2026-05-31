@@ -278,7 +278,6 @@ public class AdminController : ControllerBase
     /// Get all subjects
     /// </summary>
     [HttpGet("subjects")]
-    [AllowAnonymous]
     public async Task<IActionResult> GetAllSubjects()
     {
         try
@@ -297,7 +296,6 @@ public class AdminController : ControllerBase
     /// Get subject by ID
     /// </summary>
     [HttpGet("subjects/{subjectId}")]
-    [AllowAnonymous]
     public async Task<IActionResult> GetSubjectById(int subjectId)
     {
         try
@@ -414,7 +412,6 @@ public class AdminController : ControllerBase
     /// Get topics by subject ID
     /// </summary>
     [HttpGet("subjects/{subjectId}/topics")]
-    [AllowAnonymous]
     public async Task<IActionResult> GetTopicsBySubjectId(int subjectId)
     {
         try
@@ -433,7 +430,6 @@ public class AdminController : ControllerBase
     /// Get topic by ID
     /// </summary>
     [HttpGet("topics/{topicId}")]
-    [AllowAnonymous]
     public async Task<IActionResult> GetTopicById(int topicId)
     {
         try
@@ -880,7 +876,6 @@ public class AdminController : ControllerBase
     /// Get question by ID
     /// </summary>
     [HttpGet("questions/{questionId}")]
-    [AllowAnonymous]
     public async Task<IActionResult> GetQuestionById(int questionId)
     {
         try
