@@ -15,6 +15,39 @@
   } @else if (loadError) {
     <p class="muted empty-state">{{ loadError }}</p>
   } @else if (hasQuestions()) {
+    @if (hasFinishedQuiz()) {
+      <div class="quiz-summary" aria-label="Quiz score summary">
+        <div>
+          <span class="summary-label">Score</span>
+          <strong>{{ getCorrectAnswersCount() }} / {{ getTotalScorableQuestions() }}</strong>
+        </div>
+        <div>
+          <span class="summary-label">Answered</span>
+          <strong>{{ getAnsweredCount() }}</strong>
+        </div>
+        <div>
+          <span class="summary-label">Percent</span>
+          <strong>{{ getScorePercentage() }}%</strong>
+        </div>
+      </div>
+    }
+
+    <div class="quiz-actions-top">
+      @if (hasFinishedQuiz()) {
+        <button type="button" class="retake-btn" (click)="onRetakeQuiz()">Retake Test</button>
+      }
+
+      @if (showNextTopicNavigation) {
+        <button type="button" class="next-topic-btn top-next-topic-btn" [disabled]="!hasNextTopic" (click)="onNextTopic()">
+          @if (hasNextTopic) {
+            <span>Next Section: {{ nextTopicTitle || 'Continue' }}</span>
+          } @else {
+            <span>End Of Sections</span>
+          }
+        </button>
+      }
+    </div>
+
     <div class="question-list">
       @for (question of topic?.questions || []; track question.id) {
         <article class="question-block" [class.locked-question]="isQuestionLocked(question)">
@@ -39,20 +72,27 @@
                   class="option-btn"
                   [class.selected]="isOptionSelected(question.id, option.id)"
                   (click)="onSelectOption(question.id, option.id)"
+                  [disabled]="hasFinishedQuiz()"
                 >
                   {{ option.text }}
                 </button>
               }
             </div>
 
-            @if (getSelectedOption(question); as selectedOption) {
+            <div class="question-actions">
+              <button type="button" class="answer-toggle-btn" (click)="onRevealAnswer(question.id)">
+                {{ isAnswerRevealed(question.id) ? 'Answer Shown' : 'Show Answer' }}
+              </button>
+            </div>
+
+            @if ((hasFinishedQuiz() || isAnswerRevealed(question.id)) && getSelectedOption(question); as selectedOption) {
               <div class="result" [class.pass]="selectedOption.isCorrect" [class.fail]="!selectedOption.isCorrect">
                 <strong>{{ selectedOption.isCorrect ? 'Pass' : 'Fail' }}</strong>
                 @if (!selectedOption.isCorrect && getCorrectAnswerText(question)) {
                   <p><strong>Correct answer:</strong> {{ getCorrectAnswerText(question) }}</p>
                 }
-                @if (getQuestionExplanation(question)) {
-                  <p>{{ getQuestionExplanation(question) }}</p>
+                @if (getQuestionReviewText(question)) {
+                  <p>{{ getQuestionReviewText(question) }}</p>
                 }
                 @if (question.answerImageUrl) {
                   <div class="answer-media">
@@ -64,6 +104,12 @@
           }
         </article>
       }
+    </div>
+
+    <div class="finish-row">
+      <button type="button" class="finish-btn" [disabled]="!canFinishQuiz()" (click)="onFinishQuiz()">
+        {{ hasFinishedQuiz() ? 'Review Complete' : 'Finish Quiz' }}
+      </button>
     </div>
 
     @if (showNextTopicNavigation) {
@@ -79,5 +125,58 @@
     }
   } @else {
     <p class="muted empty-state">No MCQ added for this topic yet. Select another topic or add questions here.</p>
+  }
+
+  @if (showScorePopup && hasFinishedQuiz()) {
+    <div class="score-popup-backdrop" role="presentation" (click)="closeScorePopup()">
+      <div
+        class="score-popup"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Quiz score summary"
+        (click)="$event.stopPropagation()"
+      >
+        @if (hasCelebration()) {
+          <div class="cracker-burst" aria-hidden="true">
+            @for (particle of celebrationParticles; track $index) {
+              <span
+                class="cracker-particle"
+                [style.left]="particle.left"
+                [style.top]="particle.top"
+                [style.animation-delay]="particle.delay"
+                [style.animation-duration]="particle.duration"
+                [style.width]="particle.size"
+                [style.height]="particle.size"
+                [style.background]="particle.color"
+                [style.transform]="'rotate(' + particle.rotate + ')'"
+              ></span>
+            }
+          </div>
+        }
+
+        <p class="score-popup-kicker">Quiz complete</p>
+        <h3>{{ getScorePercentage() }}%</h3>
+        <p class="score-popup-copy">
+          You answered {{ getCorrectAnswersCount() }} out of {{ getTotalScorableQuestions() }} correctly.
+        </p>
+
+        <div class="score-popup-stats">
+          <div>
+            <span>Correct</span>
+            <strong>{{ getCorrectAnswersCount() }}</strong>
+          </div>
+          <div>
+            <span>Answered</span>
+            <strong>{{ getAnsweredCount() }}</strong>
+          </div>
+          <div>
+            <span>Score</span>
+            <strong>{{ getScorePercentage() }}%</strong>
+          </div>
+        </div>
+
+        <button type="button" class="score-popup-btn" (click)="closeScorePopup()">Close</button>
+      </div>
+    </div>
   }
 </section>

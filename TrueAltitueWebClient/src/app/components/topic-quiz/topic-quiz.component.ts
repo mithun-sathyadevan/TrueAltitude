@@ -20,6 +20,10 @@ export class TopicQuizComponent {
   @Output() nextTopicRequested = new EventEmitter<void>();
 
   protected selectedAnswers: Record<string, string> = {};
+  protected revealedAnswers: Record<string, boolean> = {};
+  protected isFinished = false;
+  protected showScorePopup = false;
+  protected celebrationParticles: Array<{ left: string; top: string; delay: string; duration: string; size: string; color: string; rotate: string }> = [];
 
   constructor(
     private readonly subscriptionAccessService: SubscriptionAccessService,
@@ -27,10 +31,25 @@ export class TopicQuizComponent {
   ) {}
 
   protected onSelectOption(questionId: string, optionId: string): void {
+    if (this.isFinished) {
+      return;
+    }
+
     this.selectedAnswers = {
       ...this.selectedAnswers,
       [questionId]: optionId,
     };
+  }
+
+  protected onRevealAnswer(questionId: string): void {
+    this.revealedAnswers = {
+      ...this.revealedAnswers,
+      [questionId]: true,
+    };
+  }
+
+  protected isAnswerRevealed(questionId: string): boolean {
+    return !!this.revealedAnswers[questionId];
   }
 
   protected isOptionSelected(questionId: string, optionId: string): boolean {
@@ -42,6 +61,92 @@ export class TopicQuizComponent {
     return question.options.find((option) => option.id === selectedOptionId);
   }
 
+  protected getAnsweredQuestions(): TopicQuestion[] {
+    return (this.topic?.questions || []).filter((question) => !!this.selectedAnswers[question.id]);
+  }
+
+  protected getUnlockedQuestions(): TopicQuestion[] {
+    return (this.topic?.questions || []).filter((question) => !this.isQuestionLocked(question));
+  }
+
+  protected getAnsweredCount(): number {
+    return this.getAnsweredQuestions().filter((question) => !this.isQuestionLocked(question)).length;
+  }
+
+  protected getCorrectAnswersCount(): number {
+    return this.getUnlockedQuestions().filter((question) => {
+      const selectedOption = this.getSelectedOption(question);
+      return !!selectedOption?.isCorrect;
+    }).length;
+  }
+
+  protected getTotalScorableQuestions(): number {
+    return this.getUnlockedQuestions().length;
+  }
+
+  protected getScorePercentage(): number {
+    const total = this.getTotalScorableQuestions();
+    if (total === 0) {
+      return 0;
+    }
+
+    return Math.round((this.getCorrectAnswersCount() / total) * 100);
+  }
+
+  protected onFinishQuiz(): void {
+    this.isFinished = true;
+    this.showScorePopup = true;
+    this.celebrationParticles = this.getCelebrationParticles();
+  }
+
+  protected onRetakeQuiz(): void {
+    this.selectedAnswers = {};
+    this.revealedAnswers = {};
+    this.isFinished = false;
+    this.showScorePopup = false;
+    this.celebrationParticles = [];
+  }
+
+  protected closeScorePopup(): void {
+    this.showScorePopup = false;
+  }
+
+  protected canFinishQuiz(): boolean {
+    const total = this.getTotalScorableQuestions();
+    return total > 0 && this.getAnsweredCount() === total && !this.isFinished;
+  }
+
+  protected hasFinishedQuiz(): boolean {
+    return this.isFinished;
+  }
+
+  protected hasCelebration(): boolean {
+    return this.hasFinishedQuiz() && this.getScorePercentage() > 75;
+  }
+
+  protected getCelebrationParticles(): Array<{ left: string; top: string; delay: string; duration: string; size: string; color: string; rotate: string }> {
+    if (!this.hasCelebration()) {
+      return [];
+    }
+
+    const colors = ['#facc15', '#fb7185', '#60a5fa', '#34d399', '#f97316', '#a78bfa'];
+
+    return Array.from({ length: 24 }, (_, index) => {
+      const side = index % 2 === 0 ? 'left' : 'right';
+      const spread = 8 + Math.floor(Math.random() * 84);
+
+      return {
+        left: `${10 + Math.floor(Math.random() * 80)}%`,
+        top: `${8 + Math.floor(Math.random() * 18)}%`,
+        delay: `${Math.random() * 0.35}s`,
+        duration: `${0.9 + Math.random() * 0.7}s`,
+        size: `${6 + Math.floor(Math.random() * 5)}px`,
+        color: colors[index % colors.length],
+        rotate: `${side === 'left' ? -spread : spread}deg`,
+      };
+    });
+  }
+
   protected getCorrectOption(question: TopicQuestion): TopicQuestionOption | undefined {
     return question.options.find((option) => option.isCorrect);
   }
@@ -50,8 +155,16 @@ export class TopicQuizComponent {
     return question.explanation || this.getCorrectOption(question)?.explanation || '';
   }
 
+  protected getQuestionReviewText(question: TopicQuestion): string {
+    return this.getQuestionExplanation(question);
+  }
+
   protected getCorrectAnswerText(question: TopicQuestion): string {
     return this.getCorrectOption(question)?.text || '';
+  }
+
+  protected getCorrectAnswerExplanation(question: TopicQuestion): string {
+    return question.explanation || this.getCorrectOption(question)?.explanation || '';
   }
 
   protected isQuestionLocked(question: TopicQuestion): boolean {
