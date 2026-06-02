@@ -33,6 +33,67 @@ header {
   gap: 12px;
 }
 
+.theme-btn {
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent-blue) 24%, var(--border-color) 76%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent-blue) 8%, white 92%), white);
+  color: var(--text-main);
+  padding: 7px 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+  transition: transform 0.18s ease, background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+:host-context(:root[data-theme='dark']) .theme-btn {
+  background: linear-gradient(180deg, #dbeafe 0%, #eff6ff 100%);
+  border-color: rgba(59, 130, 246, 0.38);
+  color: #0f172a;
+  box-shadow: 0 10px 20px rgba(2, 6, 23, 0.2);
+}
+
+.theme-btn:hover {
+  transform: translateY(-1px);
+}
+
+.theme-btn i {
+  color: inherit;
+}
+
+:host-context(:root[data-theme='dark']) .theme-btn i {
+  color: #2563eb;
+}
+
+:host-context(:root[data-theme='dark']) .theme-btn span {
+  color: #0f172a;
+}
+
+:host-context(:root[data-theme='dark']) .brand-link img {
+  filter: brightness(1.05) contrast(1.05);
+}
+
+.brand-block h1,
+.user-profile span {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+:host-context(:root[data-theme='dark']) .brand-block h1,
+:host-context(:root[data-theme='dark']) .user-profile span {
+  color: #e5eefc;
+}
+
+:host-context(:root[data-theme='dark']) .login-btn,
+:host-context(:root[data-theme='dark']) .logout-btn {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.92));
+  border-color: rgba(96, 165, 250, 0.28);
+  color: #e5eefc;
+}
+
 .login-btn {
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--accent-blue) 34%, var(--border-color) 66%);
@@ -83,5 +144,6 @@ header {
   .header-actions {
     width: 100%;
     justify-content: space-between;
+    flex-wrap: wrap;
   }
 }

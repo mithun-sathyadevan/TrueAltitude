@@ -2,6 +2,7 @@ import { Component, Input } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-top-header',
@@ -19,7 +20,16 @@ export class TopHeaderComponent {
   constructor(
     private readonly authService: AuthService,
     private readonly router: Router,
+    private readonly themeService: ThemeService,
   ) {}
+
+  protected isDarkMode(): boolean {
+    return this.themeService.isDarkMode();
+  }
+
+  protected toggleTheme(): void {
+    this.themeService.toggleTheme();
+  }
 
   protected isLoggedIn(): boolean {
     return this.authService.isLoggedIn();

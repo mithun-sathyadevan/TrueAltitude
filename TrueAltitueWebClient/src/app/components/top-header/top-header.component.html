@@ -8,6 +8,11 @@
   </div>
 
   <div class="header-actions">
+    <button type="button" class="theme-btn" (click)="toggleTheme()" [attr.aria-pressed]="isDarkMode()">
+      <i class="fas" [class.fa-moon]="!isDarkMode()" [class.fa-sun]="isDarkMode()" aria-hidden="true"></i>
+      <span>{{ isDarkMode() ? 'Dark' : 'Light' }} Mode</span>
+    </button>
+
     @if (isLoggedIn()) {
       <div class="user-profile">
         <img [src]="getDisplayAvatar()" [alt]="getDisplayName() + ' avatar'" />
