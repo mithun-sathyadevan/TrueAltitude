@@ -12,6 +12,13 @@ interface ModuleCard {
   available: boolean;
 }
 
+interface TopicProgressStat {
+  totalTopics: number;
+  coveredTopics: number;
+  remainingTopics: number;
+  coveragePercent: number;
+}
+
 @Component({
   selector: 'app-home-modules-page',
   standalone: true,
@@ -20,6 +27,13 @@ interface ModuleCard {
   styleUrl: './home-modules-page.component.scss',
 })
 export class HomeModulesPageComponent {
+  protected readonly topicProgress: TopicProgressStat = {
+    totalTopics: 24,
+    coveredTopics: 16,
+    remainingTopics: 8,
+    coveragePercent: 67,
+  };
+
   protected readonly moduleCards: ModuleCard[] = [
     {
       title: 'Topic Wise Learning',

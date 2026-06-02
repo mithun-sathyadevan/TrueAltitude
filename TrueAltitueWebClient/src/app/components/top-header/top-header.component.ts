@@ -14,7 +14,7 @@ export class TopHeaderComponent {
   @Input() name = 'Mithun';
   @Input() greeting = 'Welcome Back, Mithun';
   @Input() avatarUrl = '/images/cadet-avatar.svg';
-  @Input() logoUrl = '/images/truealtitude-logo.jpg';
+  @Input() logoUrl = '/images/truealtitude-logo.png';
 
   constructor(
     private readonly authService: AuthService,

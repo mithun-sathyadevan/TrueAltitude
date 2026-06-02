@@ -24,6 +24,11 @@ public interface ILearningRepository
     Task<LearningSubject> CreateSubjectAsync(LearningSubject subject);
     Task<LearningTopic> CreateTopicAsync(LearningTopic topic);
     Task<LearningQuestion> CreateQuestionAsync(LearningQuestion question);
+    Task<LearningQuestion> CreateQuestionWithOptionsAndTopicLinkAsync(
+        LearningQuestion question,
+        List<LearningQuestionOption> options,
+        int topicId,
+        int sortOrder);
     Task<LearningQuestionOption> CreateQuestionOptionAsync(LearningQuestionOption option);
     Task<LearningTopicQuestion> CreateTopicQuestionAsync(LearningTopicQuestion topicQuestion);
 

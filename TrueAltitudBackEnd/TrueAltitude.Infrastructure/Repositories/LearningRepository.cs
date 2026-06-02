@@ -250,6 +250,32 @@ public class LearningRepository : ILearningRepository
         return question;
     }
 
+    public async Task<LearningQuestion> CreateQuestionWithOptionsAndTopicLinkAsync(
+        LearningQuestion question,
+        List<LearningQuestionOption> options,
+        int topicId,
+        int sortOrder)
+    {
+        foreach (var option in options)
+        {
+            option.Question = question;
+        }
+
+        var topicQuestion = new LearningTopicQuestion
+        {
+            TopicId = topicId,
+            Question = question,
+            SortOrder = sortOrder
+        };
+
+        _context.LearningQuestions.Add(question);
+        _context.LearningQuestionOptions.AddRange(options);
+        _context.LearningTopicQuestions.Add(topicQuestion);
+
+        await _context.SaveChangesAsync();
+        return question;
+    }
+
     public async Task<LearningQuestionOption> CreateQuestionOptionAsync(LearningQuestionOption option)
     {
         _context.LearningQuestionOptions.Add(option);

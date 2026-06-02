@@ -86,6 +86,7 @@
   top: 16px;
   max-height: calc(100vh - 32px);
   overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .topic-panel p {
@@ -200,8 +201,10 @@
     right: 12px;
     bottom: 12px;
     z-index: 40;
-    max-height: none;
+    max-height: calc(100dvh - 100px);
     overflow: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .topic-close-btn {
@@ -216,6 +219,7 @@
     inset: 0;
     background: rgba(2, 6, 23, 0.55);
     z-index: 30;
+    touch-action: none;
   }
 }
 

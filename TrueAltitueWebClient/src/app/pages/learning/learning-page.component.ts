@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { ChapterBlogsComponent } from '../../components/chapter-blogs/chapter-blogs.component';
@@ -18,7 +18,7 @@ import { environment } from '../../../environments/environment';
   templateUrl: './learning-page.component.html',
   styleUrl: './learning-page.component.scss',
 })
-export class LearningPageComponent {
+export class LearningPageComponent implements OnDestroy {
   protected selectedSubject: TopicNode | null = null;
   protected selectedTopic: TopicNode | null = null;
   protected isTopicPickerOpen = false;
@@ -151,10 +151,16 @@ export class LearningPageComponent {
 
   protected openTopicPicker(): void {
     this.isTopicPickerOpen = true;
+    document.body.style.overflow = 'hidden';
   }
 
   protected closeTopicPicker(): void {
     this.isTopicPickerOpen = false;
+    document.body.style.overflow = '';
+  }
+
+  ngOnDestroy(): void {
+    document.body.style.overflow = '';
   }
 
   private async ensureTopicQuestionsLoaded(topic: TopicNode): Promise<void> {

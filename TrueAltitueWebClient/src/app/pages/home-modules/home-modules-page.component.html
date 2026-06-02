@@ -1,6 +1,6 @@
 <div class="home-modules-page">
   <app-top-header
-    greeting="Learning Hub"
+    greeting="True Altitude"
     name="Mithun"
     avatarUrl="/images/cadet-avatar.svg"
   ></app-top-header>
@@ -15,18 +15,44 @@
       </p>
     </div>
 
-    <div class="hero-metrics" aria-label="Quick training highlights">
-      <div class="metric-card">
-        <strong>Students</strong>
-        <span>View enrolled learners and progress</span>
-      </div>
-      <div class="metric-card">
-        <strong>Practice</strong>
-        <span>Review learning activity and assessments</span>
-      </div>
-      <div class="metric-card">
-        <strong>Insights</strong>
-        <span>Track updates from the learning workspace</span>
+    <div class="hero-metrics" aria-label="Topic progress summary">
+      <div class="progress-card">
+        <div class="progress-ring" [style.--progress-percent]="topicProgress.coveragePercent">
+          <svg viewBox="0 0 160 160" class="progress-ring__svg" aria-hidden="true">
+            <circle class="progress-ring__track" cx="80" cy="80" r="62"></circle>
+            <circle class="progress-ring__fill" cx="80" cy="80" r="62"></circle>
+          </svg>
+
+          <div class="progress-ring__percent">{{ topicProgress.coveragePercent }}%</div>
+
+          <div class="progress-ring__inner">
+            <strong>{{ topicProgress.coveredTopics }}</strong>
+            <span>of {{ topicProgress.totalTopics }}</span>
+          </div>
+        </div>
+
+        <div class="progress-copy">
+          <span class="progress-label">Topics covered</span>
+          <h3>{{ topicProgress.coveredTopics }} of {{ topicProgress.totalTopics }}</h3>
+          <p class="muted">
+            Hard-coded for now. This can later pull live topic completion data from the database.
+          </p>
+
+          <div class="progress-breakdown">
+            <div>
+              <strong>{{ topicProgress.totalTopics }}</strong>
+              <span>Total topics</span>
+            </div>
+            <div>
+              <strong>{{ topicProgress.coveredTopics }}</strong>
+              <span>Covered</span>
+            </div>
+            <div>
+              <strong>{{ topicProgress.remainingTopics }}</strong>
+              <span>Remaining</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>

@@ -199,7 +199,7 @@ export class AdminQuestionsComponent implements OnInit {
       error: (error) => {
         console.error('Error uploading workbook:', error);
         this.workbookUploading = false;
-        alert('Workbook upload failed. Please verify sheet headers and try again.');
+        alert(this.buildUploadErrorMessage(error, 'Workbook upload failed.'));
         this.cdr.markForCheck();
       }
     });
@@ -230,10 +230,26 @@ export class AdminQuestionsComponent implements OnInit {
       error: (error) => {
         console.error('Error bulk uploading questions:', error);
         this.bulkUploading = false;
-        alert('Bulk upload failed. Please verify the Excel format and try again.');
+        alert(this.buildUploadErrorMessage(error, 'Bulk upload failed.'));
         this.cdr.markForCheck();
       }
     });
+  }
+
+  private buildUploadErrorMessage(error: any, fallback: string): string {
+    const serverMessage = error?.error?.message || error?.message;
+    const serverErrors = error?.error?.errors;
+
+    if (Array.isArray(serverErrors) && serverErrors.length > 0) {
+      const lines = serverErrors.slice(0, 8).join('\n');
+      return `${serverMessage || fallback}\n\n${lines}`;
+    }
+
+    if (typeof serverMessage === 'string' && serverMessage.trim().length > 0) {
+      return serverMessage;
+    }
+
+    return fallback;
   }
 
   uploadAnswerImage(): void {

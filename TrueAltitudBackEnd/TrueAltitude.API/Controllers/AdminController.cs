@@ -845,7 +845,15 @@ public class AdminController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error importing workbook {FileName}", file.FileName);
-            return StatusCode(500, new { success = false, message = "Failed to process Excel workbook." });
+
+            var detail = ex.InnerException?.Message ?? ex.Message;
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "Failed to process Excel workbook.",
+                detail,
+                traceId = HttpContext.TraceIdentifier
+            });
         }
     }
 
@@ -1066,6 +1074,26 @@ public class AdminController : ControllerBase
         return int.MaxValue;
     }
 
+    private static bool IsOptionHeader(string normalizedHeader)
+    {
+        if (string.IsNullOrWhiteSpace(normalizedHeader))
+        {
+            return false;
+        }
+
+        if (normalizedHeader.StartsWith("option") && !normalizedHeader.Contains("correct"))
+        {
+            return true;
+        }
+
+        if (normalizedHeader.StartsWith("choice") && !normalizedHeader.Contains("correct"))
+        {
+            return true;
+        }
+
+        return normalizedHeader.Length == 1 && char.IsLetter(normalizedHeader[0]);
+    }
+
     private static bool TryParseWorksheetRows(
         IXLWorksheet worksheet,
         out List<BulkQuestionImportItemDto> importRows,
@@ -1098,7 +1126,7 @@ public class AdminController : ControllerBase
             var normalizedHeader = NormalizeHeader(rawHeader);
             columnMap[normalizedHeader] = col;
 
-            if (normalizedHeader.StartsWith("option") && !normalizedHeader.Contains("correct"))
+            if (IsOptionHeader(normalizedHeader))
             {
                 optionColumns.Add((normalizedHeader, col));
             }

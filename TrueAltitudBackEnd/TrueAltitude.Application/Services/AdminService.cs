@@ -602,22 +602,22 @@ public class AdminService : IAdminService
             var dedupKey = BuildQuestionDedupKey(row.QuestionText, row.Type, row.Options);
             if (!questionMap.TryGetValue(dedupKey, out var question))
             {
-                question = await _learningRepository.CreateQuestionAsync(new LearningQuestion
+                var newQuestion = new LearningQuestion
                 {
-                    Code = Guid.NewGuid().ToString()[..8],
+                    Code = Guid.NewGuid().ToString("N"),
                     Text = row.QuestionText.Trim(),
                     Type = string.IsNullOrWhiteSpace(row.Type) ? "multiple_choice" : row.Type.Trim().ToLowerInvariant(),
                     Difficulty = Math.Clamp(row.Difficulty, 1, 5),
                     ExplanationText = string.IsNullOrWhiteSpace(row.ExplanationText) ? null : row.ExplanationText.Trim(),
                     AnswerImageUrl = string.IsNullOrWhiteSpace(row.AnswerImageUrl) ? null : row.AnswerImageUrl.Trim()
-                });
+                };
 
+                var newOptions = new List<LearningQuestionOption>(row.Options.Count);
                 for (var optionIndex = 0; optionIndex < row.Options.Count; optionIndex++)
                 {
-                    await _learningRepository.CreateQuestionOptionAsync(new LearningQuestionOption
+                    newOptions.Add(new LearningQuestionOption
                     {
-                        QuestionId = question.Id,
-                        Code = Guid.NewGuid().ToString()[..8],
+                        Code = Guid.NewGuid().ToString("N"),
                         Text = row.Options[optionIndex],
                         IsCorrect = optionIndex == correctOptionIndex,
                         Explanation = string.Empty,
@@ -625,28 +625,35 @@ public class AdminService : IAdminService
                     });
                 }
 
+                question = await _learningRepository.CreateQuestionWithOptionsAndTopicLinkAsync(
+                    newQuestion,
+                    newOptions,
+                    topicId,
+                    nextSortOrder++);
+
                 question = await _learningRepository.GetQuestionByIdWithOptionsAsync(question.Id) ?? question;
                 questionMap[dedupKey] = question;
                 result.CreatedQuestions++;
+                result.LinkedToTopic++;
             }
             else
             {
                 result.ReusedQuestions++;
-            }
 
-            if (question.TopicQuestions.Any(tq => tq.TopicId == topicId))
-            {
-                result.AlreadyLinked++;
-            }
-            else
-            {
-                await _learningRepository.CreateTopicQuestionAsync(new LearningTopicQuestion
+                if (question.TopicQuestions.Any(tq => tq.TopicId == topicId))
                 {
-                    TopicId = topicId,
-                    QuestionId = question.Id,
-                    SortOrder = nextSortOrder++
-                });
-                result.LinkedToTopic++;
+                    result.AlreadyLinked++;
+                }
+                else
+                {
+                    await _learningRepository.CreateTopicQuestionAsync(new LearningTopicQuestion
+                    {
+                        TopicId = topicId,
+                        QuestionId = question.Id,
+                        SortOrder = nextSortOrder++
+                    });
+                    result.LinkedToTopic++;
+                }
             }
 
             result.ProcessedRows++;

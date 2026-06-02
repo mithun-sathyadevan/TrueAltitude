@@ -1,5 +1,7 @@
 using System.Text;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -25,6 +27,7 @@ var isDevelopmentEnvironment = builder.Environment.IsDevelopment();
 var relaxJwtValidation = isDevelopmentEnvironment && builder.Configuration.GetValue<bool>("Authentication:RelaxJwtValidationInDevelopment");
 var enforceRequestTimeHeader = builder.Configuration.GetValue<bool?>("SecurityHeader:EnforceRequestTimeHeader") ?? !isDevelopmentEnvironment;
 var mysqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("MySQL connection string is not configured.");
+var dbCommandTimeoutSeconds = builder.Configuration.GetValue<int?>("Database:CommandTimeoutSeconds") ?? 180;
 
 // ===== Add Services =====
 builder.Services.AddControllers()
@@ -37,7 +40,13 @@ builder.Services.AddOpenApi();
 
 // ===== Database Context =====
 builder.Services.AddDbContext<TrueAltitudeDbContext>(options =>
-    options.UseMySql(mysqlConnectionString, ServerVersion.AutoDetect(mysqlConnectionString))
+    options.UseMySql(
+        mysqlConnectionString,
+        ServerVersion.AutoDetect(mysqlConnectionString),
+        mySqlOptions =>
+        {
+            mySqlOptions.CommandTimeout(dbCommandTimeoutSeconds);
+        })
 );
 
 // ===== Dependency Injection =====
@@ -160,11 +169,25 @@ builder.Services.AddAuthentication(options =>
 // ===== CORS =====
 builder.Services.AddCors(options =>
 {
+    static bool IsAllowedFrontendOrigin(string? origin)
+    {
+        if (string.IsNullOrWhiteSpace(origin))
+        {
+            return false;
+        }
+
+        return string.Equals(origin, "http://localhost:4200", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(origin, "https://www.truealtitude.in", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(origin, "https://truealtitude.in", StringComparison.OrdinalIgnoreCase)
+            || origin.EndsWith(".azurestaticapps.net", StringComparison.OrdinalIgnoreCase);
+    }
+
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:4200", "https://www.truealtitude.in")
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        policy
+            .SetIsOriginAllowed(IsAllowedFrontendOrigin)
+            .AllowAnyMethod()
+            .AllowAnyHeader();
     });
 });
 
@@ -185,6 +208,45 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
     app.MapOpenApi();
+}
+else
+{
+    app.UseExceptionHandler(errorApp =>
+    {
+        errorApp.Run(async context =>
+        {
+            var exceptionFeature = context.Features.Get<IExceptionHandlerFeature>();
+            var logger = context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("GlobalExceptionHandler");
+
+            if (exceptionFeature?.Error != null)
+            {
+                logger.LogError(exceptionFeature.Error, "Unhandled exception for {Method} {Path}", context.Request.Method, context.Request.Path);
+            }
+
+            var origin = context.Request.Headers.Origin.ToString();
+            if (!string.IsNullOrWhiteSpace(origin) &&
+                (string.Equals(origin, "http://localhost:4200", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(origin, "https://www.truealtitude.in", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(origin, "https://truealtitude.in", StringComparison.OrdinalIgnoreCase)
+                || origin.EndsWith(".azurestaticapps.net", StringComparison.OrdinalIgnoreCase)))
+            {
+                context.Response.Headers.AccessControlAllowOrigin = origin;
+                context.Response.Headers.Vary = "Origin";
+            }
+
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            context.Response.ContentType = "application/json";
+
+            var payload = new
+            {
+                success = false,
+                message = "An unexpected server error occurred.",
+                traceId = context.TraceIdentifier
+            };
+
+            await context.Response.WriteAsync(JsonSerializer.Serialize(payload));
+        });
+    });
 }
 
 if (!app.Environment.IsDevelopment())
