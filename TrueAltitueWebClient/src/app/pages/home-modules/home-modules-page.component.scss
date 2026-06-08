@@ -22,7 +22,7 @@
 .hero-panel {
   margin-bottom: 16px;
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.9fr);
+  grid-template-columns: repeat(2, minmax(0, max-content));
   gap: 16px;
   align-items: stretch;
 }
@@ -30,7 +30,71 @@
 .hero-copy {
   display: grid;
   gap: 8px;
+  padding: 7px 12px;
   align-content: start;
+}
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(241, 246, 255, 0.88));
+.workspace-brand {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--accent-blue) 14%, var(--border-color) 86%);
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.94), rgba(15, 23, 42, 0.88));
+}
+
+.workspace-brand img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.workspace-brand span {
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #1e293b;
+}
+
+
+@media (max-width: 560px) {
+  .hero-tags {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-tags span {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+.captain-greeting {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(15, 23, 42, 0.06), rgba(37, 99, 235, 0.1));
+  color: #0f172a;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #16a34a;
+  box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.14);
 }
 
 .intro-kicker {
@@ -55,10 +119,94 @@
   color: var(--text-dim);
 }
 
+.hero-tags {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, max-content));
+  gap: 8px;
+}
+
+.hero-tags span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 7px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent-blue) 18%, var(--border-color) 82%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(241, 246, 255, 0.88));
+  color: #1e293b;
+  font-size: 0.77rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
+}
+
+.hero-tags i {
+  color: var(--accent-blue);
+  font-size: 0.8rem;
+}
+
 .hero-metrics {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 12px;
+}
+
+.cockpit-hud {
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--accent-blue) 18%, var(--border-color) 82%);
+  background:
+    radial-gradient(circle at 80% 20%, rgba(14, 165, 233, 0.18), transparent 34%),
+    linear-gradient(135deg, #f8fbff 0%, #edf4ff 56%, #e2ecff 100%);
+  padding: 14px;
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+}
+
+.hud-visual {
+  width: 170px;
+  align-self: center;
+  justify-self: center;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.hud-visual img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 150px;
+  object-fit: cover;
+}
+
+.hud-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.hud-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+.hud-copy strong {
+  font-size: 1.03rem;
+  color: #0f172a;
+}
+
+.hud-copy p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #334155;
+  line-height: 1.5;
 }
 
 .progress-card {
@@ -85,10 +233,63 @@
   background-color: color-mix(in srgb, var(--card-bg) 92%, #020617 8%);
 }
 
+:host-context(:root[data-theme='dark']) .workspace-brand {
+  border-color: rgba(96, 165, 250, 0.28);
+  background: rgba(15, 23, 42, 0.75);
+}
+
+:host-context(:root[data-theme='dark']) .workspace-brand img {
+  background: rgba(15, 23, 42, 0.2);
+}
+
+:host-context(:root[data-theme='dark']) .workspace-brand span {
+  color: #dbeafe;
+}
+
+:host-context(:root[data-theme='dark']) .cockpit-hud {
+  border-color: rgba(96, 165, 250, 0.28);
+  background:
+    radial-gradient(circle at 80% 20%, rgba(56, 189, 248, 0.16), transparent 34%),
+    linear-gradient(135deg, rgba(15, 23, 42, 0.94), rgba(30, 41, 59, 0.9));
+  box-shadow: 0 12px 26px rgba(2, 6, 23, 0.22);
+}
+
+:host-context(:root[data-theme='dark']) .hud-visual {
+  border-color: rgba(96, 165, 250, 0.22);
+  box-shadow: inset 0 1px 0 rgba(148, 163, 184, 0.08);
+}
+
+:host-context(:root[data-theme='dark']) .hud-copy strong {
+  color: #f1f5f9;
+}
+
+:host-context(:root[data-theme='dark']) .hud-copy p {
+  color: #cbd5e1;
+}
+
+:host-context(:root[data-theme='dark']) .hud-label {
+  color: #93c5fd;
+}
+
+:host-context(:root[data-theme='dark']) .captain-greeting {
+  background: linear-gradient(90deg, rgba(96, 165, 250, 0.24), rgba(30, 41, 59, 0.45));
+  color: #e2e8f0;
+}
+
+:host-context(:root[data-theme='dark']) .hero-tags span {
+  border-color: rgba(96, 165, 250, 0.28);
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.94), rgba(15, 23, 42, 0.88));
+  color: #dbeafe;
+}
+
+:host-context(:root[data-theme='dark']) .hero-tags i {
+  color: #93c5fd;
+}
+
 :host-context(:root[data-theme='dark']) .progress-card {
   background:
-    radial-gradient(circle at top right, rgba(59, 130, 246, 0.12), transparent 34%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(247, 250, 255, 0.96));
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.2), transparent 34%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.94));
   border-color: rgba(96, 165, 250, 0.28);
   box-shadow: 0 14px 32px rgba(2, 6, 23, 0.18);
 }
@@ -155,9 +356,10 @@
 }
 
 :host-context(:root[data-theme='dark']) .progress-ring__percent {
-  background: #ffffff;
-  border-color: rgba(59, 130, 246, 0.22);
+  background: rgba(15, 23, 42, 0.92);
+  border-color: rgba(96, 165, 250, 0.32);
   box-shadow: 0 8px 18px rgba(2, 6, 23, 0.12);
+  color: #93c5fd;
 }
 
 .progress-ring__inner {
@@ -174,7 +376,7 @@
 }
 
 :host-context(:root[data-theme='dark']) .progress-ring__inner {
-  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.96));
   box-shadow: 0 10px 22px rgba(2, 6, 23, 0.12);
 }
 
@@ -186,7 +388,7 @@
 }
 
 :host-context(:root[data-theme='dark']) .progress-ring__inner strong {
-  color: #2563eb;
+  color: #93c5fd;
 }
 
 .progress-ring__inner span {
@@ -201,7 +403,7 @@
 :host-context(:root[data-theme='dark']) .progress-ring__inner span,
 :host-context(:root[data-theme='dark']) .progress-copy p,
 :host-context(:root[data-theme='dark']) .progress-breakdown span {
-  color: #64748b;
+  color: #94a3b8;
 }
 
 :host-context(:root[data-theme='dark']) .hero-copy p,
@@ -235,7 +437,7 @@
 
 :host-context(:root[data-theme='dark']) .progress-label {
   background: rgba(96, 165, 250, 0.12);
-  color: #2563eb;
+  color: #bfdbfe;
 }
 
 .progress-copy h3 {
@@ -266,7 +468,7 @@
 }
 
 :host-context(:root[data-theme='dark']) .progress-breakdown div {
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(15, 23, 42, 0.78);
   border-color: rgba(96, 165, 250, 0.22);
 }
 
@@ -281,7 +483,7 @@
 :host-context(:root[data-theme='dark']) .progress-breakdown span,
 :host-context(:root[data-theme='dark']) .progress-ring__inner strong,
 :host-context(:root[data-theme='dark']) .progress-ring__inner span {
-  color: #0f172a;
+  color: #e2e8f0;
 }
 
 .progress-breakdown span {
@@ -428,10 +630,37 @@
   .hero-metrics {
     grid-template-columns: 1fr;
   }
+
+  .workspace-brand {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .cockpit-hud {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .hud-visual {
+    width: 100%;
+    max-width: 340px;
+  }
 }
 
 @media (max-width: 700px) {
   .home-modules-page {
     padding: 12px;
+  }
+}
+
+@media (max-width: 560px) {
+  .hero-tags {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-tags span {
+    width: 100%;
+    justify-content: flex-start;
   }
 }

@@ -8,6 +8,15 @@ import { AuthService } from '../../services/auth.service';
 import { LearningDataService } from '../../services/learning-data.service';
 import { SubscriptionAccessService } from '../../services/subscription-access.service';
 
+type SubjectCompletionState = 'Completed' | 'In Progress' | 'Not Started';
+
+interface SubjectCompletionItem {
+  subject: string;
+  completedTopics: number;
+  totalTopics: number;
+  state: SubjectCompletionState;
+}
+
 @Component({
   selector: 'app-learning-subjects-page',
   standalone: true,
@@ -20,6 +29,26 @@ export class LearningSubjectsPageComponent implements OnInit {
   protected subjects: TopicNode[] = [];
   protected loading = true;
   protected loadError = '';
+
+  protected readonly subjectCompletionItems: SubjectCompletionItem[] = [
+    { subject: 'Air Navigation', completedTopics: 12, totalTopics: 12, state: 'Completed' },
+    { subject: 'Meteorology', completedTopics: 9, totalTopics: 12, state: 'In Progress' },
+    { subject: 'Flight Planning', completedTopics: 7, totalTopics: 10, state: 'In Progress' },
+    { subject: 'Aircraft Systems', completedTopics: 10, totalTopics: 10, state: 'Completed' },
+    { subject: 'Aviation Regulations', completedTopics: 4, totalTopics: 8, state: 'In Progress' },
+    { subject: 'Radio Telephony', completedTopics: 0, totalTopics: 7, state: 'Not Started' },
+    { subject: 'Performance and Limitations', completedTopics: 6, totalTopics: 11, state: 'In Progress' },
+    { subject: 'Human Factors', completedTopics: 8, totalTopics: 8, state: 'Completed' },
+    { subject: 'Air Law', completedTopics: 2, totalTopics: 9, state: 'In Progress' },
+    { subject: 'Emergency Procedures', completedTopics: 0, totalTopics: 6, state: 'Not Started' },
+  ];
+
+  private readonly defaultSubjectCompletion: SubjectCompletionItem = {
+    subject: '',
+    completedTopics: 0,
+    totalTopics: 0,
+    state: 'Not Started',
+  };
 
   constructor(
     private readonly learningDataService: LearningDataService,
@@ -89,5 +118,21 @@ export class LearningSubjectsPageComponent implements OnInit {
       (subject) =>
         (subject.title || '').toLowerCase().includes(query) || (subject.description || '').toLowerCase().includes(query),
     );
+  }
+
+  protected getSubjectCompletion(subject: TopicNode): SubjectCompletionItem {
+    const subjectTitle = (subject.title || '').trim().toLowerCase();
+    const matched = this.subjectCompletionItems.find((item) => item.subject.trim().toLowerCase() === subjectTitle);
+    return matched ?? this.defaultSubjectCompletion;
+  }
+
+  protected getSubjectCompletionPercent(subject: TopicNode): number {
+    const item = this.getSubjectCompletion(subject);
+
+    if (item.totalTopics <= 0) {
+      return 0;
+    }
+
+    return Math.round((item.completedTopics / item.totalTopics) * 100);
   }
 }

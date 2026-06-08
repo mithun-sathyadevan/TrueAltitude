@@ -31,6 +31,7 @@ header {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 }
 
 .theme-btn {
@@ -119,6 +120,11 @@ header {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
+}
+
+.user-profile span {
+  white-space: nowrap;
 }
 
 .user-profile img {
@@ -131,19 +137,76 @@ header {
 
 @media (max-width: 900px) {
   header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+    align-items: center;
+    gap: 10px;
     margin-bottom: 24px;
   }
 
   .brand-block {
     width: 100%;
+    justify-content: space-between;
   }
 
   .header-actions {
     width: 100%;
     justify-content: space-between;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+
+  .theme-btn,
+  .logout-btn,
+  .login-btn {
+    flex: 0 0 auto;
+  }
+
+  .theme-btn {
+    padding: 7px 10px;
+  }
+
+  .theme-btn span {
+    display: none;
+  }
+
+  .user-profile {
+    flex: 1 1 auto;
+    justify-content: center;
+    gap: 8px;
+    overflow: hidden;
+  }
+
+  .user-profile span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .user-profile img {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+@media (max-width: 560px) {
+  .brand-block {
+    gap: 10px;
+  }
+
+  .brand-link img {
+    width: 64px;
+  }
+
+  .brand-block h1 {
+    font-size: 1.05rem;
+  }
+
+  .header-actions {
+    gap: 6px;
+  }
+
+  .theme-btn,
+  .logout-btn,
+  .login-btn {
+    padding: 6px 10px;
+    font-size: 0.78rem;
   }
 }

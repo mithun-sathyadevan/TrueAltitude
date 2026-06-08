@@ -1,0 +1,123 @@
+<svg width="720" height="480" viewBox="0 0 720 480" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Flight deck illustration</title>
+  <desc id="desc">Panoramic cockpit scene with instrument panels, windshield glow, and a high-altitude horizon.</desc>
+  <defs>
+    <linearGradient id="frameBg" x1="360" y1="0" x2="360" y2="480" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#08111F"/>
+      <stop offset="1" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="skyTop" x1="360" y1="42" x2="360" y2="248" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#153A66"/>
+      <stop offset="0.52" stop-color="#0F4C81"/>
+      <stop offset="1" stop-color="#1E3A5F"/>
+    </linearGradient>
+    <linearGradient id="glassGlow" x1="360" y1="42" x2="360" y2="240" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#BAE6FD" stop-opacity="0.18"/>
+      <stop offset="0.4" stop-color="#FFFFFF" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.01"/>
+    </linearGradient>
+    <linearGradient id="panelBase" x1="360" y1="244" x2="360" y2="454" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#131D30"/>
+      <stop offset="1" stop-color="#050A14"/>
+    </linearGradient>
+    <linearGradient id="screenBlue" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#38BDF8"/>
+      <stop offset="1" stop-color="#1D4ED8"/>
+    </linearGradient>
+    <linearGradient id="screenAmber" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#F59E0B"/>
+      <stop offset="1" stop-color="#FB7185"/>
+    </linearGradient>
+    <radialGradient id="sunGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(496 104) rotate(90) scale(98 136)">
+      <stop stop-color="#F8FAFC" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#F8FAFC" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="720" height="480" rx="28" fill="url(#frameBg)"/>
+  <rect x="26" y="26" width="668" height="428" rx="24" fill="#07101D" stroke="#1E293B" stroke-width="2"/>
+
+  <path d="M92 94C92 67.4903 113.49 46 140 46H580C606.51 46 628 67.4903 628 94V246H92V94Z" fill="url(#skyTop)"/>
+  <g opacity="0.3">
+    <path d="M146 118C160 106 184 106 198 118C211 104 236 103 250 116C265 110 283 113 292 125C304 125 314 132 316 142C304 149 288 150 274 146H170C152 146 138 136 146 118Z" fill="#E0F2FE">
+      <animateTransform attributeName="transform" type="translate" values="0 0; 24 0; 0 0" dur="18s" repeatCount="indefinite"/>
+    </path>
+    <path d="M430 132C440 122 457 120 470 127C480 116 501 114 514 123C528 118 547 122 557 134C568 134 578 141 580 150C570 156 557 158 545 156H454C437 156 424 147 430 132Z" fill="#F8FAFC" fill-opacity="0.8">
+      <animateTransform attributeName="transform" type="translate" values="0 0; -28 0; 0 0" dur="22s" repeatCount="indefinite"/>
+    </path>
+  </g>
+  <path d="M122 212C188 178 270 160 360 160C450 160 532 178 598 212V246H122V212Z" fill="#CBD5E1" fill-opacity="0.18"/>
+  <path d="M92 94C92 67.4903 113.49 46 140 46H580C606.51 46 628 67.4903 628 94V246H92V94Z" fill="url(#glassGlow)"/>
+  <ellipse cx="500" cy="110" rx="116" ry="86" fill="url(#sunGlow)">
+    <animate attributeName="opacity" values="0.72;0.92;0.72" dur="7s" repeatCount="indefinite"/>
+  </ellipse>
+  <path d="M160 46L222 246" stroke="#475569" stroke-opacity="0.6" stroke-width="8"/>
+  <path d="M560 46L498 246" stroke="#475569" stroke-opacity="0.6" stroke-width="8"/>
+  <path d="M360 46V246" stroke="#64748B" stroke-opacity="0.42" stroke-width="6"/>
+  <path d="M214 186C252 176 304 170 360 170C416 170 468 176 506 186" stroke="#E2E8F0" stroke-opacity="0.22" stroke-width="3" stroke-linecap="round"/>
+
+  <path d="M56 246H664C676.15 246 686 255.85 686 268V424C686 436.15 676.15 446 664 446H56C43.8497 446 34 436.15 34 424V268C34 255.85 43.8497 246 56 246Z" fill="url(#panelBase)"/>
+
+  <rect x="78" y="274" width="170" height="114" rx="18" fill="#0A1220" stroke="#334155" stroke-width="2"/>
+  <rect x="275" y="270" width="170" height="122" rx="18" fill="#09111D" stroke="#334155" stroke-width="2"/>
+  <rect x="472" y="274" width="170" height="114" rx="18" fill="#0A1220" stroke="#334155" stroke-width="2"/>
+
+  <rect x="96" y="294" width="134" height="74" rx="12" fill="#07101D"/>
+  <rect x="293" y="288" width="134" height="86" rx="12" fill="#07101D"/>
+  <rect x="490" y="294" width="134" height="74" rx="12" fill="#07101D"/>
+
+  <circle cx="163" cy="331" r="34" fill="#030712" stroke="#475569" stroke-width="2"/>
+  <circle cx="360" cy="331" r="38" fill="#030712" stroke="#475569" stroke-width="2"/>
+  <circle cx="557" cy="331" r="34" fill="#030712" stroke="#475569" stroke-width="2"/>
+
+  <path d="M141 331H185" stroke="#60A5FA" stroke-width="4" stroke-linecap="round">
+    <animateTransform attributeName="transform" type="rotate" values="0 163 331; 8 163 331; 0 163 331; -8 163 331; 0 163 331" dur="6s" repeatCount="indefinite"/>
+  </path>
+  <path d="M163 309V353" stroke="#60A5FA" stroke-width="4" stroke-linecap="round">
+    <animate attributeName="opacity" values="0.85;1;0.85" dur="2.8s" repeatCount="indefinite"/>
+  </path>
+  <path d="M332 346C345 330 357 323 390 318" stroke="#38BDF8" stroke-width="5" stroke-linecap="round">
+    <animateTransform attributeName="transform" type="rotate" values="0 360 331; 6 360 331; 0 360 331; -4 360 331; 0 360 331" dur="5s" repeatCount="indefinite"/>
+  </path>
+  <path d="M538 347C554 329 568 322 581 317" stroke="#22C55E" stroke-width="5" stroke-linecap="round">
+    <animateTransform attributeName="transform" type="rotate" values="0 557 331; 5 557 331; 0 557 331; -3 557 331; 0 557 331" dur="4.4s" repeatCount="indefinite"/>
+  </path>
+
+  <path d="M101 304H128" stroke="#38BDF8" stroke-width="4" stroke-linecap="round">
+    <animate attributeName="opacity" values="0.4;1;0.4" dur="1.8s" repeatCount="indefinite"/>
+  </path>
+  <path d="M101 318H144" stroke="#1D4ED8" stroke-width="4" stroke-linecap="round">
+    <animate attributeName="opacity" values="1;0.45;1" dur="2.2s" repeatCount="indefinite"/>
+  </path>
+  <path d="M292 302H333" stroke="#38BDF8" stroke-width="4" stroke-linecap="round">
+    <animate attributeName="opacity" values="0.45;1;0.45" dur="1.6s" repeatCount="indefinite"/>
+  </path>
+  <path d="M292 317H355" stroke="#1D4ED8" stroke-width="4" stroke-linecap="round">
+    <animate attributeName="opacity" values="1;0.4;1" dur="2.1s" repeatCount="indefinite"/>
+  </path>
+  <path d="M489 304H516" stroke="#38BDF8" stroke-width="4" stroke-linecap="round">
+    <animate attributeName="opacity" values="0.35;1;0.35" dur="1.9s" repeatCount="indefinite"/>
+  </path>
+  <path d="M489 318H532" stroke="#1D4ED8" stroke-width="4" stroke-linecap="round">
+    <animate attributeName="opacity" values="1;0.5;1" dur="2.4s" repeatCount="indefinite"/>
+  </path>
+
+  <rect x="112" y="404" width="102" height="14" rx="7" fill="url(#screenBlue)" fill-opacity="0.88">
+    <animate attributeName="fill-opacity" values="0.5;0.95;0.5" dur="3s" repeatCount="indefinite"/>
+  </rect>
+  <rect x="309" y="404" width="102" height="14" rx="7" fill="url(#screenAmber)" fill-opacity="0.82">
+    <animate attributeName="fill-opacity" values="0.45;0.9;0.45" dur="2.4s" repeatCount="indefinite"/>
+  </rect>
+  <rect x="506" y="404" width="102" height="14" rx="7" fill="url(#screenBlue)" fill-opacity="0.88">
+    <animate attributeName="fill-opacity" values="0.55;0.96;0.55" dur="3.6s" repeatCount="indefinite"/>
+  </rect>
+
+  <path d="M250 446L304 386H416L470 446" fill="#020617"/>
+  <circle cx="360" cy="397" r="18" fill="#09111D" stroke="#475569" stroke-width="2"/>
+  <path d="M360 383V411" stroke="#94A3B8" stroke-width="3" stroke-linecap="round"/>
+  <path d="M346 397H374" stroke="#94A3B8" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="360" cy="397" r="28" stroke="#38BDF8" stroke-opacity="0.22" stroke-width="2">
+    <animate attributeName="r" values="24;30;24" dur="4.5s" repeatCount="indefinite"/>
+    <animate attributeName="stroke-opacity" values="0.12;0.3;0.12" dur="4.5s" repeatCount="indefinite"/>
+  </circle>
+</svg>

@@ -27,6 +27,8 @@ interface TopicProgressStat {
   styleUrl: './home-modules-page.component.scss',
 })
 export class HomeModulesPageComponent {
+  protected readonly flightGreeting = this.getFlightGreeting();
+
   protected readonly topicProgress: TopicProgressStat = {
     totalTopics: 24,
     coveredTopics: 16,
@@ -56,4 +58,18 @@ export class HomeModulesPageComponent {
       available: false,
     },
   ];
+
+  private getFlightGreeting(): string {
+    const hour = new Date().getHours();
+
+    if (hour < 12) {
+      return 'Good morning, Captain';
+    }
+
+    if (hour < 18) {
+      return 'Good afternoon, Captain';
+    }
+
+    return 'Good evening, Captain';
+  }
 }

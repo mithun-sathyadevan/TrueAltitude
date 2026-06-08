@@ -8,14 +8,39 @@
   <section class="hero-panel surface-card">
     <div class="hero-copy">
       <span class="intro-kicker">Training Workspace</span>
+      <div class="workspace-brand" aria-label="True Altitude brand">
+        <img src="/images/truealtitude-logo.png" alt="True Altitude logo" />
+        <span>True Altitude Flight Training</span>
+      </div>
+      <div class="captain-greeting">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span>{{ flightGreeting }}</span>
+      </div>
       <h2 class="intro-title">Choose where you want to continue your training.</h2>
       <p class="muted">
         Open a learning path, launch a timed assessment, or review your cockpit dashboard.
         Each module is structured for clear navigation and future expansion.
       </p>
+      <div class="hero-tags" aria-label="Workspace highlights">
+        <span><i class="fas fa-compass" aria-hidden="true"></i> Clear Navigation</span>
+        <span><i class="fas fa-stopwatch" aria-hidden="true"></i> Timed Practice</span>
+        <span><i class="fas fa-chart-line" aria-hidden="true"></i> Progress Tracking</span>
+        <span><i class="fas fa-layer-group" aria-hidden="true"></i> Structured Review</span>
+      </div>
     </div>
 
     <div class="hero-metrics" aria-label="Topic progress summary">
+      <section class="cockpit-hud" aria-label="Cockpit readiness visual">
+        <div class="hud-visual" aria-hidden="true">
+          <img src="/images/flight-deck-hero.svg" alt="" />
+        </div>
+        <div class="hud-copy">
+          <span class="hud-label">Live Flight Deck</span>
+          <strong>Captain Command Interface</strong>
+          <p>Mission status, readiness, and training navigation are aligned for launch.</p>
+        </div>
+      </section>
+
       <div class="progress-card">
         <div class="progress-ring" [style.--progress-percent]="topicProgress.coveragePercent">
           <svg viewBox="0 0 160 160" class="progress-ring__svg" aria-hidden="true">
