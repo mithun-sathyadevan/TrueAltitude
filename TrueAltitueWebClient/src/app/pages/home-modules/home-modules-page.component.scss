@@ -30,20 +30,18 @@
 .hero-copy {
   display: grid;
   gap: 8px;
-  padding: 7px 12px;
   align-content: start;
 }
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(241, 246, 255, 0.88));
+
 .workspace-brand {
   width: fit-content;
   display: inline-flex;
   align-items: center;
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
   gap: 10px;
   padding: 6px 10px;
   border-radius: 10px;
   border: 1px solid color-mix(in srgb, var(--accent-blue) 14%, var(--border-color) 86%);
-  background: linear-gradient(180deg, rgba(30, 41, 59, 0.94), rgba(15, 23, 42, 0.88));
+  background: rgba(255, 255, 255, 0.82);
 }
 
 .workspace-brand img {
