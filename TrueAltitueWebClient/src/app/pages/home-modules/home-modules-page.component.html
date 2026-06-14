@@ -5,100 +5,159 @@
     avatarUrl="/images/cadet-avatar.svg"
   ></app-top-header>
 
-  <section class="hero-panel surface-card">
-    <div class="hero-copy">
-      <span class="intro-kicker">Training Workspace</span>
-      <div class="workspace-brand" aria-label="True Altitude brand">
-        <img src="/images/truealtitude-logo.png" alt="True Altitude logo" />
-        <span>True Altitude Flight Training</span>
+  <section class="mission-hero surface-card">
+    <div class="mission-copy">
+      <span class="eyebrow">Pilot Workspace</span>
+
+      <div class="flight-banner" aria-label="Flight deck status">
+        <div class="flight-banner__icon" aria-hidden="true">
+          <i class="fas fa-plane"></i>
+        </div>
+        <div class="flight-banner__content">
+          <strong>Flight Deck Ready</strong>
+          <span>Route: Learning Track -> Timed Exam -> Final Review</span>
+        </div>
+        <div class="flight-banner__track" aria-hidden="true">
+          <span class="flight-banner__line"></span>
+          <i class="fas fa-plane flight-banner__plane"></i>
+        </div>
       </div>
-      <div class="captain-greeting">
-        <span class="status-dot" aria-hidden="true"></span>
-        <span>{{ flightGreeting }}</span>
-      </div>
-      <h2 class="intro-title">Choose where you want to continue your training.</h2>
-      <p class="muted">
-        Open a learning path, launch a timed assessment, or review your cockpit dashboard.
-        Each module is structured for clear navigation and future expansion.
+
+      <h2>Train with clarity. Test with confidence.</h2>
+
+      <p>
+        {{ flightGreeting }}. Complete your topic practice, then switch to timed exam mode.
       </p>
-      <div class="hero-tags" aria-label="Workspace highlights">
-        <span><i class="fas fa-compass" aria-hidden="true"></i> Clear Navigation</span>
-        <span><i class="fas fa-stopwatch" aria-hidden="true"></i> Timed Practice</span>
-        <span><i class="fas fa-chart-line" aria-hidden="true"></i> Progress Tracking</span>
-        <span><i class="fas fa-layer-group" aria-hidden="true"></i> Structured Review</span>
+
+      <div class="mission-actions">
+        <a class="launch-btn launch-btn--primary" routerLink="/learning/subjects">
+          <i class="fas fa-sitemap" aria-hidden="true"></i>
+          Continue Learning
+        </a>
+        <a class="launch-btn launch-btn--secondary" routerLink="/learning/realtime-exam">
+          <i class="fas fa-stopwatch" aria-hidden="true"></i>
+          Start Timed Exam
+        </a>
+      </div>
+
+      <div class="quick-points" aria-label="Key strengths">
+        <span>
+          <i class="fas fa-book-open" aria-hidden="true"></i>
+          Learn topic-by-topic with MCQs and instant explanations after each attempt
+        </span>
+        <span>
+          <i class="fas fa-stopwatch" aria-hidden="true"></i>
+          Practice under a 60-minute timed exam flow to improve real test confidence
+        </span>
+        <span>
+          <i class="fas fa-chart-line" aria-hidden="true"></i>
+          Track completion with {{ topicProgress.coveredTopics }}/{{ topicProgress.totalTopics }} topics covered
+        </span>
       </div>
     </div>
 
-    <div class="hero-metrics" aria-label="Topic progress summary">
-      <section class="cockpit-hud" aria-label="Cockpit readiness visual">
-        <div class="hud-visual" aria-hidden="true">
-          <img src="/images/flight-deck-hero.svg" alt="" />
+    <div class="mission-side">
+      <section class="brief-card" aria-label="Training briefing">
+        <div class="brief-visual" aria-hidden="true">
+          <div class="brief-visual__scene">
+            <!-- Altitude Scale -->
+            <div class="brief-visual__altimeter">
+              <div class="altitude-mark">5000</div>
+              <div class="altitude-mark">4000</div>
+              <div class="altitude-mark">3000</div>
+            </div>
+            
+            <!-- Heading Compass -->
+            <div class="brief-visual__compass">
+              <span class="compass-label compass-n">N</span>
+              <span class="compass-label compass-e">E</span>
+            </div>
+            
+            <!-- Flight Route with Waypoints -->
+            <span class="brief-visual__route"></span>
+            <div class="brief-visual__waypoint waypoint-1"></div>
+            <div class="brief-visual__waypoint waypoint-2"></div>
+            
+            <!-- Animated Plane -->
+            <i class="fas fa-plane brief-visual__plane"></i>
+          </div>
         </div>
-        <div class="hud-copy">
-          <span class="hud-label">Live Flight Deck</span>
-          <strong>Captain Command Interface</strong>
-          <p>Mission status, readiness, and training navigation are aligned for launch.</p>
+        <div class="brief-content">
+          <span class="brief-label">Today’s Briefing</span>
+          <h3>Next best move: close your remaining topics.</h3>
+          <ul>
+            <li>{{ topicProgress.remainingTopics }} topics left in your current track</li>
+            <li>Switch to exam mode after completion</li>
+            <li>Review answer explanations to fix weak areas</li>
+          </ul>
         </div>
       </section>
 
-      <div class="progress-card">
+      <section class="coverage-card" aria-label="Topic coverage">
         <div class="progress-ring" [style.--progress-percent]="topicProgress.coveragePercent">
           <svg viewBox="0 0 160 160" class="progress-ring__svg" aria-hidden="true">
             <circle class="progress-ring__track" cx="80" cy="80" r="62"></circle>
             <circle class="progress-ring__fill" cx="80" cy="80" r="62"></circle>
           </svg>
-
           <div class="progress-ring__percent">{{ topicProgress.coveragePercent }}%</div>
-
           <div class="progress-ring__inner">
             <strong>{{ topicProgress.coveredTopics }}</strong>
             <span>of {{ topicProgress.totalTopics }}</span>
           </div>
         </div>
 
-        <div class="progress-copy">
-          <span class="progress-label">Topics covered</span>
-          <h3>{{ topicProgress.coveredTopics }} of {{ topicProgress.totalTopics }}</h3>
-          <p class="muted">
-            Hard-coded for now. This can later pull live topic completion data from the database.
-          </p>
-
-          <div class="progress-breakdown">
+        <div class="coverage-copy">
+          <span class="coverage-label">Coverage</span>
+          <h3>{{ topicProgress.coveredTopics }} / {{ topicProgress.totalTopics }} topics completed</h3>
+          <div class="coverage-stats">
             <div>
               <strong>{{ topicProgress.totalTopics }}</strong>
-              <span>Total topics</span>
+              <span>Total</span>
             </div>
             <div>
               <strong>{{ topicProgress.coveredTopics }}</strong>
-              <span>Covered</span>
+              <span>Done</span>
             </div>
             <div>
               <strong>{{ topicProgress.remainingTopics }}</strong>
-              <span>Remaining</span>
+              <span>Left</span>
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   </section>
 
-  <section class="card-grid">
-    @for (card of moduleCards; track card.title) {
-      @if (card.available && card.route) {
-        <a class="surface-card module-card" [routerLink]="card.route">
-          <div class="icon"><i [class]="card.iconClass" aria-hidden="true"></i></div>
-          <h3>{{ card.title }}</h3>
-          <p class="muted">{{ card.summary }}</p>
-          <span class="cta">Open Module</span>
-        </a>
-      } @else {
-        <article class="surface-card module-card disabled">
-          <div class="icon"><i [class]="card.iconClass" aria-hidden="true"></i></div>
-          <h3>{{ card.title }}</h3>
-          <p class="muted">{{ card.summary }}</p>
-          <span class="cta">Coming Soon</span>
-        </article>
+  <section class="modules" aria-label="Training modules">
+    <div class="modules-head">
+      <h3>Choose where you want to train now</h3>
+      <span class="head-chip">Active Modules</span>
+    </div>
+
+    <div class="module-grid">
+      @for (card of moduleCards; track card.title) {
+        @if (card.available && card.route) {
+          <a class="surface-card module-tile" [routerLink]="card.route">
+            <div class="tile-top">
+              <div class="tile-icon"><i [class]="card.iconClass" aria-hidden="true"></i></div>
+              <span class="tile-state">Live</span>
+            </div>
+            <h4>{{ card.title }}</h4>
+            <p>{{ card.summary }}</p>
+            <span class="tile-cta">Launch module <i class="fas fa-arrow-right" aria-hidden="true"></i></span>
+          </a>
+        } @else {
+          <article class="surface-card module-tile disabled">
+            <div class="tile-top">
+              <div class="tile-icon"><i [class]="card.iconClass" aria-hidden="true"></i></div>
+              <span class="tile-state">Planned</span>
+            </div>
+            <h4>{{ card.title }}</h4>
+            <p>{{ card.summary }}</p>
+            <span class="tile-cta">Coming soon</span>
+          </article>
+        }
       }
-    }
+    </div>
   </section>
 </div>

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, ElementRef, HostListener, Input } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../services/auth.service';
@@ -17,11 +17,26 @@ export class TopHeaderComponent {
   @Input() avatarUrl = '/images/cadet-avatar.svg';
   @Input() logoUrl = '/images/truealtitude-logo.png';
 
+  protected isProfileMenuOpen = false;
+
   constructor(
     private readonly authService: AuthService,
     private readonly router: Router,
     private readonly themeService: ThemeService,
+    private readonly hostElement: ElementRef<HTMLElement>,
   ) {}
+
+  @HostListener('document:click', ['$event'])
+  protected onDocumentClick(event: MouseEvent): void {
+    if (!this.isProfileMenuOpen) {
+      return;
+    }
+
+    const target = event.target as Node | null;
+    if (!target || !this.hostElement.nativeElement.contains(target)) {
+      this.isProfileMenuOpen = false;
+    }
+  }
 
   protected isDarkMode(): boolean {
     return this.themeService.isDarkMode();
@@ -43,7 +58,12 @@ export class TopHeaderComponent {
     return this.authService.currentUser()?.avatarUrl || this.avatarUrl;
   }
 
+  protected toggleProfileMenu(): void {
+    this.isProfileMenuOpen = !this.isProfileMenuOpen;
+  }
+
   protected onLogout(): void {
+    this.isProfileMenuOpen = false;
     this.authService.logout();
     void this.router.navigate(['/login']);
   }

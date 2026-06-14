@@ -38,22 +38,22 @@ export class HomeModulesPageComponent {
 
   protected readonly moduleCards: ModuleCard[] = [
     {
-      title: 'Topic Wise Learning',
-      summary: 'Navigate topics and subtopics, answer MCQs, and review explanations.',
+      title: 'Learning Track',
+      summary: 'Study by subject and topic, answer MCQs, and review explanations instantly.',
       iconClass: 'fas fa-sitemap',
       route: '/learning/subjects',
       available: true,
     },
     {
-      title: 'Real-Time Exam Quiz',
-      summary: 'Practice in timed mode with pass/fail evaluation and instant review.',
+      title: 'Timed Exam Mode',
+      summary: 'Attempt a focused 60-minute quiz session and evaluate your readiness.',
       iconClass: 'fas fa-stopwatch',
       route: '/learning/realtime-exam',
       available: true,
     },
     {
-      title: 'Upcoming Module',
-      summary: 'Reserved for future learning modules you add later.',
+      title: 'Performance Insights',
+      summary: 'Detailed analytics and weak-area recommendations will be available here.',
       iconClass: 'fas fa-plus-circle',
       available: false,
     },

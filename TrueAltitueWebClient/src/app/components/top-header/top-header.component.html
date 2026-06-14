@@ -14,11 +14,33 @@
     </button>
 
     @if (isLoggedIn()) {
-      <div class="user-profile">
-        <img [src]="getDisplayAvatar()" [alt]="getDisplayName() + ' avatar'" />
-        <span>{{ getDisplayName() }}</span>
+      <div class="profile-menu">
+        <button
+          type="button"
+          class="user-profile"
+          (click)="toggleProfileMenu()"
+          [attr.aria-expanded]="isProfileMenuOpen"
+          aria-haspopup="menu"
+          aria-label="Open profile menu"
+        >
+          <img [src]="getDisplayAvatar()" [alt]="getDisplayName() + ' avatar'" />
+          <span>{{ getDisplayName() }}</span>
+          <i class="fas fa-chevron-down" aria-hidden="true"></i>
+        </button>
+
+        @if (isProfileMenuOpen) {
+          <div class="profile-dropdown" role="menu" aria-label="Profile actions">
+            <div class="profile-dropdown__meta">
+              <strong>{{ getDisplayName() }}</strong>
+              <span>Signed in</span>
+            </div>
+            <button type="button" class="profile-dropdown__logout" (click)="onLogout()" role="menuitem">
+              <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+              Logout
+            </button>
+          </div>
+        }
       </div>
-      <button type="button" class="logout-btn" (click)="onLogout()">Logout</button>
     } @else {
       <a class="login-btn" routerLink="/login">Login</a>
     }
