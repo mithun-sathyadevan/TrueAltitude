@@ -136,24 +136,6 @@ public class LearningRepository : ILearningRepository
 
         Console.WriteLine($"[GetRandomQuestions] Selected {selectedQuestionIds.Count} random questions");
 
-        // If not enough questions from selected subjects, fetch more from all subjects
-        if (selectedQuestionIds.Count < count)
-        {
-            Console.WriteLine($"[GetRandomQuestions] Not enough questions ({selectedQuestionIds.Count} < {count}), fetching more from all subjects");
-            
-            var allQuestionIds = await _context.LearningQuestions
-                .AsNoTracking()
-                .Where(q => !selectedQuestionIds.Contains(q.Id))
-                .Select(q => q.Id)
-                .ToListAsync();
-
-            var additionalCount = count - selectedQuestionIds.Count;
-            var additionalIds = allQuestionIds.OrderBy(_ => random.Next()).Take(additionalCount).ToList();
-            selectedQuestionIds.AddRange(additionalIds);
-
-            Console.WriteLine($"[GetRandomQuestions] Added {additionalIds.Count} additional questions, total now {selectedQuestionIds.Count}");
-        }
-
         // Fetch the full questions with options
         var questions = await _context.LearningQuestions
             .AsNoTracking()
@@ -190,9 +172,17 @@ public class LearningRepository : ILearningRepository
 
     public async Task<LearningTopic?> GetTopicByCodeAsync(string topicCode)
     {
+        var normalizedTopicCode = (topicCode ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(normalizedTopicCode))
+        {
+            return null;
+        }
+
+        var loweredTopicCode = normalizedTopicCode.ToLower();
+
         return await _context.LearningTopics
             .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Code == topicCode);
+            .FirstOrDefaultAsync(t => t.Code.ToLower() == loweredTopicCode);
     }
 
     public async Task<List<LearningTopicQuestion>> GetTopicQuestionsByTopicIdAsync(int topicId)
@@ -226,6 +216,114 @@ public class LearningRepository : ILearningRepository
                 .ThenInclude(tq => tq.Topic)
                     .ThenInclude(t => t.ParentTopic)
             .ToListAsync();
+    }
+
+    public async Task<int> GetTrackableTopicCountAsync()
+    {
+        return await _context.LearningTopics
+            .AsNoTracking()
+            .Where(topic => topic.TopicQuestions.Any())
+            .CountAsync();
+    }
+
+    public async Task<int> GetCompletedTopicCountAsync(int userId)
+    {
+        return await _context.UserTopicProgresses
+            .AsNoTracking()
+            .Where(progress => progress.UserId == userId && progress.IsCompleted)
+            .Where(progress => _context.LearningTopicQuestions.Any(tq => tq.TopicId == progress.TopicId))
+            .CountAsync();
+    }
+
+    public async Task<List<string>> GetCompletedTopicCodesAsync(int userId)
+    {
+        return await _context.UserTopicProgresses
+            .AsNoTracking()
+            .Where(progress => progress.UserId == userId && progress.IsCompleted)
+            .Where(progress => _context.LearningTopicQuestions.Any(tq => tq.TopicId == progress.TopicId))
+            .Join(
+                _context.LearningTopics.AsNoTracking(),
+                progress => progress.TopicId,
+                topic => topic.Id,
+                (_, topic) => topic.Code)
+            .Distinct()
+            .ToListAsync();
+    }
+
+    public async Task MarkTopicCompletedAsync(int userId, int topicId, DateTime completedAtUtc, int? scorePercent)
+    {
+        var topicHasQuestions = await _context.LearningTopicQuestions
+            .AsNoTracking()
+            .AnyAsync(topicQuestion => topicQuestion.TopicId == topicId);
+
+        if (!topicHasQuestions)
+        {
+            return;
+        }
+
+        var existing = await _context.UserTopicProgresses
+            .FirstOrDefaultAsync(progress => progress.UserId == userId && progress.TopicId == topicId);
+
+        var safeScorePercent = scorePercent.HasValue
+            ? Math.Clamp(scorePercent.Value, 0, 100)
+            : (int?)null;
+
+        if (existing == null)
+        {
+            await _context.UserTopicProgresses.AddAsync(new UserTopicProgress
+            {
+                UserId = userId,
+                TopicId = topicId,
+                IsCompleted = true,
+                CompletedAt = completedAtUtc,
+                LastAttemptAt = safeScorePercent.HasValue ? completedAtUtc : null,
+                AttemptCount = safeScorePercent.HasValue ? 1 : 0,
+                LastPercent = safeScorePercent ?? 0,
+                BestPercent = safeScorePercent ?? 0,
+            });
+        }
+        else
+        {
+            existing.IsCompleted = true;
+            existing.CompletedAt = completedAtUtc;
+
+            if (safeScorePercent.HasValue)
+            {
+                existing.AttemptCount = Math.Max(existing.AttemptCount, 0) + 1;
+                existing.LastPercent = safeScorePercent.Value;
+                existing.BestPercent = Math.Max(existing.BestPercent, safeScorePercent.Value);
+                existing.LastAttemptAt = completedAtUtc;
+            }
+
+            _context.UserTopicProgresses.Update(existing);
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<List<TopicProgressMetric>> GetTopicProgressMetricsAsync(int userId, string? subjectCode = null)
+    {
+        var normalizedSubjectCode = (subjectCode ?? string.Empty).Trim();
+        var hasSubjectFilter = !string.IsNullOrWhiteSpace(normalizedSubjectCode);
+
+        var query =
+            from progress in _context.UserTopicProgresses.AsNoTracking()
+            join topic in _context.LearningTopics.AsNoTracking() on progress.TopicId equals topic.Id
+            join subject in _context.LearningSubjects.AsNoTracking() on topic.SubjectId equals subject.Id
+            where progress.UserId == userId
+                && progress.IsCompleted
+                && _context.LearningTopicQuestions.Any(tq => tq.TopicId == progress.TopicId)
+                && (!hasSubjectFilter || subject.Code == normalizedSubjectCode)
+            select new TopicProgressMetric
+            {
+                TopicCode = topic.Code,
+                TopicTitle = topic.Title,
+                AttemptCount = progress.AttemptCount,
+                BestPercent = progress.BestPercent,
+                LastPercent = progress.LastPercent,
+            };
+
+        return await query.ToListAsync();
     }
 
     // Create operations

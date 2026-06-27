@@ -21,7 +21,9 @@ import { SubscriptionAccessService } from '../../services/subscription-access.se
   styleUrl: './realtime-exam-page.component.scss',
 })
 export class RealtimeExamPageComponent implements OnDestroy {
-  protected readonly totalSeconds = 60 * 60; // 60 minutes
+  protected totalSeconds = 60 * 60;
+  protected configuredDurationMinutes = 60;
+  protected configuredQuestionCount = 10;
   protected timeLeftSeconds = this.totalSeconds;
   protected showSubjectSelector = false; // New state for subject selection
   protected isExamStarted = false;
@@ -30,7 +32,7 @@ export class RealtimeExamPageComponent implements OnDestroy {
   protected selectedAnswers: Record<string, string> = {};
   protected questions: ExamQuestion[] = [];
   protected availableSubjects: TopicNode[] = [];
-  protected selectedSubjectCodes: Set<string> = new Set();
+  protected selectedSubjectCode = '';
   protected loadingSubjects = false;
   protected loadingQuestions = false;
   protected loadingEvaluation = false;
@@ -73,7 +75,20 @@ export class RealtimeExamPageComponent implements OnDestroy {
     this.loadError = '';
     
     try {
-      const subjects = await this.learningDataService.getSubjects();
+      const [subjects, examConfig] = await Promise.all([
+        this.learningDataService.getSubjects(),
+        this.learningDataService.getExamConfig(),
+      ]);
+
+      if (examConfig) {
+        const configuredCount = Number.isFinite(examConfig.questionCount) ? Math.floor(examConfig.questionCount) : this.configuredQuestionCount;
+        const configuredMinutes = Number.isFinite(examConfig.durationMinutes) ? Math.floor(examConfig.durationMinutes) : this.configuredDurationMinutes;
+
+        this.configuredQuestionCount = Math.max(1, configuredCount);
+        this.configuredDurationMinutes = Math.max(1, configuredMinutes);
+        this.totalSeconds = this.configuredDurationMinutes * 60;
+      }
+
       if (!subjects) {
         this.loadError = 'Session expired. Please login again.';
         this.authService.logout();
@@ -82,7 +97,14 @@ export class RealtimeExamPageComponent implements OnDestroy {
       }
 
       console.log('[RealtimeExamPageComponent] Subjects loaded:', subjects.length);
-      this.availableSubjects = subjects;
+      this.availableSubjects = this.hasPremiumAccess()
+        ? subjects
+        : subjects.filter((subject) => !subject.requiresSubscription);
+
+      if (this.availableSubjects.length === 0) {
+        this.loadError = 'No free subjects are available for this quiz right now.';
+      }
+
       this.showSubjectSelector = true;
     } catch (err) {
       console.error('[RealtimeExamPageComponent] Error loading subjects:', err);
@@ -97,24 +119,16 @@ export class RealtimeExamPageComponent implements OnDestroy {
   protected closeSubjectSelector(): void {
     console.log('[RealtimeExamPageComponent] Closing subject selector');
     this.showSubjectSelector = false;
-    this.selectedSubjectCodes.clear();
+    this.selectedSubjectCode = '';
     this.cdr.detectChanges();
   }
 
-  protected toggleSubject(subjectId: string): void {
-    if (this.selectedSubjectCodes.has(subjectId)) {
-      this.selectedSubjectCodes.delete(subjectId);
-    } else {
-      this.selectedSubjectCodes.add(subjectId);
-    }
+  protected selectSubject(subjectId: string): void {
+    this.selectedSubjectCode = subjectId;
   }
 
-  protected selectAllSubjects(): void {
-    this.selectedSubjectCodes = new Set(this.availableSubjects.map(s => s.id));
-  }
-
-  protected clearAllSubjects(): void {
-    this.selectedSubjectCodes.clear();
+  protected isSubjectSelected(subjectId: string): boolean {
+    return this.selectedSubjectCode === subjectId;
   }
 
   protected async startExam(): Promise<void> {
@@ -123,8 +137,8 @@ export class RealtimeExamPageComponent implements OnDestroy {
       return;
     }
 
-    if (this.selectedSubjectCodes.size === 0) {
-      this.loadError = 'Please select at least one subject.';
+    if (!this.selectedSubjectCode) {
+      this.loadError = 'Please select one subject.';
       return;
     }
 
@@ -132,7 +146,7 @@ export class RealtimeExamPageComponent implements OnDestroy {
     this.loadError = '';
 
     try {
-      const subjectCodes = Array.from(this.selectedSubjectCodes);
+      const subjectCodes = [this.selectedSubjectCode];
       console.log('[RealtimeExamPageComponent] Fetching exam questions for subjects:', subjectCodes);
       const questionsData = await this.learningDataService.getExamQuestions(subjectCodes);
 
@@ -247,6 +261,10 @@ export class RealtimeExamPageComponent implements OnDestroy {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   }
 
+  protected examDescription(): string {
+    return `Select one subject, answer ${this.configuredQuestionCount} randomly selected questions, and review your score after submit. ${this.configuredDurationMinutes}-minute timer with auto-submit.`;
+  }
+
   protected async submitExam(): Promise<void> {
     await this.evaluateAnswers(true);
     this.finishExam();
@@ -265,7 +283,7 @@ export class RealtimeExamPageComponent implements OnDestroy {
     this.answerExplanations = {};
     this.correctAnswerTexts = {};
     this.answerImageUrls = {};
-    this.selectedSubjectCodes.clear();
+    this.selectedSubjectCode = '';
     this.openSubjectSelector();
   }
 

@@ -82,3 +82,30 @@ public class ExamQuestionEvaluationDto
     public string Explanation { get; set; } = string.Empty;
     public string? AnswerImageUrl { get; set; }
 }
+
+public class LearningTopicProgressSummaryDto
+{
+    public int TotalTopics { get; set; }
+    public int CoveredTopics { get; set; }
+    public int RemainingTopics { get; set; }
+    public int CoveragePercent { get; set; }
+}
+
+public class LearningTopicPerformanceInsightDto
+{
+    public int AttemptedTopics { get; set; }
+    public int AverageScorePercent { get; set; }
+    public int ConsistencyPercent { get; set; }
+    public string Recommendation { get; set; } = string.Empty;
+    public List<LearningTopicScoreInsightDto> StrongTopics { get; set; } = new();
+    public List<LearningTopicScoreInsightDto> ImprovementTopics { get; set; } = new();
+}
+
+public class LearningTopicScoreInsightDto
+{
+    public string TopicCode { get; set; } = string.Empty;
+    public string TopicTitle { get; set; } = string.Empty;
+    public int AttemptCount { get; set; }
+    public int BestPercent { get; set; }
+    public int LastPercent { get; set; }
+}

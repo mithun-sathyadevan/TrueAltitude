@@ -17,6 +17,7 @@ public class TrueAltitudeDbContext : DbContext
     public DbSet<LearningTopicQuestion> LearningTopicQuestions { get; set; } = null!;
     public DbSet<LearningQuestion> LearningQuestions { get; set; } = null!;
     public DbSet<LearningQuestionOption> LearningQuestionOptions { get; set; } = null!;
+    public DbSet<UserTopicProgress> UserTopicProgresses { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -223,6 +224,44 @@ public class TrueAltitudeDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasIndex(e => new { e.SubjectId, e.ParentTopicId, e.SortOrder });
+        });
+
+        modelBuilder.Entity<UserTopicProgress>(entity =>
+        {
+            entity.ToTable("UserTopicProgress");
+
+            entity.HasKey(e => new { e.UserId, e.TopicId });
+
+            entity.Property(e => e.IsCompleted)
+                .HasDefaultValue(false);
+
+            entity.Property(e => e.AttemptCount)
+                .HasDefaultValue(0);
+
+            entity.Property(e => e.BestPercent)
+                .HasDefaultValue(0);
+
+            entity.Property(e => e.LastPercent)
+                .HasDefaultValue(0);
+
+            entity.Property(e => e.CompletedAt)
+                .HasColumnType("datetime(6)");
+
+            entity.Property(e => e.LastAttemptAt)
+                .HasColumnType("datetime(6)");
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Topic)
+                .WithMany()
+                .HasForeignKey(e => e.TopicId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.TopicId);
+            entity.HasIndex(e => new { e.UserId, e.IsCompleted });
         });
 
         modelBuilder.Entity<LearningQuestion>(entity =>

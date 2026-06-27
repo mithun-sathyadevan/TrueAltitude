@@ -54,6 +54,11 @@ export interface ExamQuestion {
   options: ExamQuestionOption[];
 }
 
+export interface ExamConfig {
+  questionCount: number;
+  durationMinutes: number;
+}
+
 export interface ExamEvaluationItem {
   questionId: string;
   isCorrect: boolean;
@@ -69,4 +74,33 @@ export interface ExamEvaluationResponse {
   totalQuestions: number;
   percent: number;
   results: ExamEvaluationItem[];
+}
+
+export interface TopicProgressSummary {
+  totalTopics: number;
+  coveredTopics: number;
+  remainingTopics: number;
+  coveragePercent: number;
+}
+
+export interface TopicCompletionPayload {
+  topicCode: string;
+  scorePercent?: number;
+}
+
+export interface TopicScoreInsight {
+  topicCode: string;
+  topicTitle: string;
+  attemptCount: number;
+  bestPercent: number;
+  lastPercent: number;
+}
+
+export interface TopicPerformanceInsight {
+  attemptedTopics: number;
+  averageScorePercent: number;
+  consistencyPercent: number;
+  recommendation: string;
+  strongTopics: TopicScoreInsight[];
+  improvementTopics: TopicScoreInsight[];
 }

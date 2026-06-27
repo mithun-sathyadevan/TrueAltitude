@@ -23,7 +23,7 @@
           aria-haspopup="menu"
           aria-label="Open profile menu"
         >
-          <img [src]="getDisplayAvatar()" [alt]="getDisplayName() + ' avatar'" />
+          <img [src]="getDisplayAvatar()" [alt]="getDisplayName() + ' avatar'" (error)="onAvatarError($event)" />
           <span>{{ getDisplayName() }}</span>
           <i class="fas fa-chevron-down" aria-hidden="true"></i>
         </button>

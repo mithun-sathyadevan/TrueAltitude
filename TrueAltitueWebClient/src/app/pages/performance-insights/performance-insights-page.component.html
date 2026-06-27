@@ -1,0 +1,90 @@
+<section class="surface-card insight-page" aria-label="Performance insight details">
+  <div class="insight-header">
+    <div>
+      <span class="eyebrow">Performance Insights</span>
+      <h2>Focused guidance from your quiz scores</h2>
+      <p>Use this to identify what you are doing well and where you need practice next.</p>
+    </div>
+    <a class="back-link" routerLink="/learning/subjects">
+      <i class="fas fa-arrow-left" aria-hidden="true"></i>
+      Back to Subjects
+    </a>
+  </div>
+
+  @if (isLoading) {
+    <p class="muted">Loading insights...</p>
+  } @else if (loadError) {
+    <p class="muted">{{ loadError }}</p>
+  } @else {
+    <div class="insight-metrics">
+      <article>
+        <span>Average Score</span>
+        <strong>{{ insight.averageScorePercent }}%</strong>
+      </article>
+      <article>
+        <span>Consistency</span>
+        <strong>{{ insight.consistencyPercent }}%</strong>
+      </article>
+      <article>
+        <span>Topics Attempted</span>
+        <strong>{{ insight.attemptedTopics }}</strong>
+      </article>
+    </div>
+
+    <article class="insight-recommendation">
+      <h3>What to do next</h3>
+      <p>{{ insight.recommendation }}</p>
+    </article>
+
+    <div class="insight-columns">
+      <section class="insight-column">
+        <h3>Strong Areas</h3>
+        @if (insight.strongTopics.length === 0) {
+          <p class="muted">Complete more topic quizzes to identify strong areas.</p>
+        } @else {
+          <ul>
+            @for (topic of insight.strongTopics; track topic.topicCode) {
+              <li>
+                <div>
+                  <strong>{{ topic.topicTitle }}</strong>
+                  <span>Attempts: {{ topic.attemptCount }}</span>
+                </div>
+                <span class="score good">Best {{ topic.bestPercent }}%</span>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <section class="insight-column">
+        <h3>Needs Improvement</h3>
+        @if (insight.improvementTopics.length === 0) {
+          <p class="muted">No weak areas detected yet. Keep attempting quizzes regularly.</p>
+        } @else {
+          <ul>
+            @for (topic of insight.improvementTopics; track topic.topicCode) {
+              <li>
+                <div>
+                  <strong>{{ topic.topicTitle }}</strong>
+                  <span>Attempts: {{ topic.attemptCount }}</span>
+                </div>
+                <span class="score warn">Latest {{ topic.lastPercent }}%</span>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </div>
+
+    @if (!hasInsightData) {
+      <article class="surface-card no-data-note">
+        <h3>How to unlock meaningful insights</h3>
+        <ol>
+          <li>Complete at least one topic quiz.</li>
+          <li>Retake topics where score is below 70%.</li>
+          <li>Compare this page after each retry to track improvement.</li>
+        </ol>
+      </article>
+    }
+  }
+</section>

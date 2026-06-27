@@ -648,22 +648,27 @@ public class AdminController : ControllerBase
                 return BadRequest(new { success = false, message = "No valid question rows found in Excel." });
             }
 
-            await using var transaction = await _dbContext.Database.BeginTransactionAsync();
-            var result = await _adminService.BulkImportQuestionsToTopicAsync(topicId, importRows);
+            var strategy = _dbContext.Database.CreateExecutionStrategy();
 
-            if (result.Errors.Count > 0 || result.SkippedRows > 0)
+            return await strategy.ExecuteAsync<IActionResult>(async () =>
             {
-                await transaction.RollbackAsync();
-                return BadRequest(new
-                {
-                    success = false,
-                    message = "Excel import failed. No data was saved.",
-                    errors = result.Errors
-                });
-            }
+                await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+                var result = await _adminService.BulkImportQuestionsToTopicAsync(topicId, importRows);
 
-            await transaction.CommitAsync();
-            return Ok(new { success = true, data = result });
+                if (result.Errors.Count > 0 || result.SkippedRows > 0)
+                {
+                    await transaction.RollbackAsync();
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Excel import failed. No data was saved.",
+                        errors = result.Errors
+                    });
+                }
+
+                await transaction.CommitAsync();
+                return Ok(new { success = true, data = result });
+            });
         }
         catch (Exception ex)
         {
@@ -710,137 +715,142 @@ public class AdminController : ControllerBase
                 return BadRequest(new { success = false, message = "Excel file does not contain any worksheet." });
             }
 
-            await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            var strategy = _dbContext.Database.CreateExecutionStrategy();
 
-            var allSubjects = await _adminService.GetAllSubjectsAsync();
-            var existingSubject = allSubjects.FirstOrDefault(s =>
-                string.Equals(s.Title.Trim(), subjectTitle, StringComparison.OrdinalIgnoreCase));
-
-            var createdSubject = false;
-            var subject = existingSubject;
-
-            if (subject == null)
+            return await strategy.ExecuteAsync<IActionResult>(async () =>
             {
-                var existingSubjectCodes = new HashSet<string>(
-                    allSubjects.Select(s => s.Code),
-                    StringComparer.OrdinalIgnoreCase);
+                await using var transaction = await _dbContext.Database.BeginTransactionAsync();
 
-                var created = await _adminService.CreateSubjectAsync(new CreateSubjectDto
+                var allSubjects = await _adminService.GetAllSubjectsAsync();
+                var existingSubject = allSubjects.FirstOrDefault(s =>
+                    string.Equals(s.Title.Trim(), subjectTitle, StringComparison.OrdinalIgnoreCase));
+
+                var createdSubject = false;
+                var subject = existingSubject;
+
+                if (subject == null)
                 {
-                    Code = GenerateUniqueCode(subjectTitle, existingSubjectCodes, "SUB"),
-                    Title = subjectTitle,
-                    Description = $"Imported from workbook {file.FileName} on {DateTime.UtcNow:yyyy-MM-dd}.",
-                    RequiresSubscription = false,
-                    SortOrder = (allSubjects.Select(s => s.SortOrder).DefaultIfEmpty(0).Max()) + 1
-                });
+                    var existingSubjectCodes = new HashSet<string>(
+                        allSubjects.Select(s => s.Code),
+                        StringComparer.OrdinalIgnoreCase);
 
-                subject = created;
-                createdSubject = true;
-            }
-
-            var result = new WorkbookQuestionImportResultDto
-            {
-                SubjectId = subject.Id,
-                SubjectCode = subject.Code,
-                SubjectTitle = subject.Title,
-                SubjectCreated = createdSubject
-            };
-
-            var topics = await _adminService.GetTopicsBySubjectIdAsync(subject.Id);
-            var topicsByTitle = topics
-                .GroupBy(t => t.Title.Trim(), StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
-
-            var topicCodes = new HashSet<string>(topics.Select(t => t.Code), StringComparer.OrdinalIgnoreCase);
-            var nextTopicSortOrder = topics.Select(t => t.SortOrder).DefaultIfEmpty(0).Max() + 1;
-            var importErrors = new List<string>();
-
-            foreach (var worksheet in workbook.Worksheets)
-            {
-                var sheetTitle = worksheet.Name?.Trim() ?? string.Empty;
-                if (string.IsNullOrWhiteSpace(sheetTitle))
-                {
-                    continue;
-                }
-
-                if (!TryParseWorksheetRows(worksheet, out var importRows, out var parseError))
-                {
-                    importErrors.Add($"Worksheet '{sheetTitle}': {parseError ?? "Failed to parse worksheet."}");
-                    break;
-                }
-
-                if (importRows.Count == 0)
-                {
-                    importErrors.Add($"Worksheet '{sheetTitle}': No valid question rows found in this worksheet.");
-                    break;
-                }
-
-                var topicCreated = false;
-                if (!topicsByTitle.TryGetValue(sheetTitle, out var topic))
-                {
-                    topic = await _adminService.CreateTopicAsync(new CreateTopicDto
+                    var created = await _adminService.CreateSubjectAsync(new CreateSubjectDto
                     {
-                        SubjectId = subject.Id,
-                        ParentTopicId = null,
-                        Code = GenerateUniqueCode(sheetTitle, topicCodes, "TOP"),
-                        Title = sheetTitle,
-                        Description = $"Imported from worksheet {sheetTitle}.",
-                        SortOrder = nextTopicSortOrder++
+                        Code = GenerateUniqueCode(subjectTitle, existingSubjectCodes, "SUB"),
+                        Title = subjectTitle,
+                        Description = $"Imported from workbook {file.FileName} on {DateTime.UtcNow:yyyy-MM-dd}.",
+                        RequiresSubscription = false,
+                        SortOrder = (allSubjects.Select(s => s.SortOrder).DefaultIfEmpty(0).Max()) + 1
                     });
 
-                    topicsByTitle[sheetTitle] = topic;
-                    topicCodes.Add(topic.Code);
-                    topicCreated = true;
+                    subject = created;
+                    createdSubject = true;
                 }
 
-                var topicImport = await _adminService.BulkImportQuestionsToTopicAsync(topic.Id, importRows);
-
-                if (topicImport.Errors.Count > 0 || topicImport.SkippedRows > 0)
+                var result = new WorkbookQuestionImportResultDto
                 {
-                    importErrors.Add($"Worksheet '{sheetTitle}': Import failed.");
-                    importErrors.AddRange(topicImport.Errors.Select(error => $"Worksheet '{sheetTitle}': {error}"));
-                    break;
+                    SubjectId = subject.Id,
+                    SubjectCode = subject.Code,
+                    SubjectTitle = subject.Title,
+                    SubjectCreated = createdSubject
+                };
+
+                var topics = await _adminService.GetTopicsBySubjectIdAsync(subject.Id);
+                var topicsByTitle = topics
+                    .GroupBy(t => t.Title.Trim(), StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+                var topicCodes = new HashSet<string>(topics.Select(t => t.Code), StringComparer.OrdinalIgnoreCase);
+                var nextTopicSortOrder = topics.Select(t => t.SortOrder).DefaultIfEmpty(0).Max() + 1;
+                var importErrors = new List<string>();
+
+                foreach (var worksheet in workbook.Worksheets)
+                {
+                    var sheetTitle = worksheet.Name?.Trim() ?? string.Empty;
+                    if (string.IsNullOrWhiteSpace(sheetTitle))
+                    {
+                        continue;
+                    }
+
+                    if (!TryParseWorksheetRows(worksheet, out var importRows, out var parseError))
+                    {
+                        importErrors.Add($"Worksheet '{sheetTitle}': {parseError ?? "Failed to parse worksheet."}");
+                        break;
+                    }
+
+                    if (importRows.Count == 0)
+                    {
+                        importErrors.Add($"Worksheet '{sheetTitle}': No valid question rows found in this worksheet.");
+                        break;
+                    }
+
+                    var topicCreated = false;
+                    if (!topicsByTitle.TryGetValue(sheetTitle, out var topic))
+                    {
+                        topic = await _adminService.CreateTopicAsync(new CreateTopicDto
+                        {
+                            SubjectId = subject.Id,
+                            ParentTopicId = null,
+                            Code = GenerateUniqueCode(sheetTitle, topicCodes, "TOP"),
+                            Title = sheetTitle,
+                            Description = $"Imported from worksheet {sheetTitle}.",
+                            SortOrder = nextTopicSortOrder++
+                        });
+
+                        topicsByTitle[sheetTitle] = topic;
+                        topicCodes.Add(topic.Code);
+                        topicCreated = true;
+                    }
+
+                    var topicImport = await _adminService.BulkImportQuestionsToTopicAsync(topic.Id, importRows);
+
+                    if (topicImport.Errors.Count > 0 || topicImport.SkippedRows > 0)
+                    {
+                        importErrors.Add($"Worksheet '{sheetTitle}': Import failed.");
+                        importErrors.AddRange(topicImport.Errors.Select(error => $"Worksheet '{sheetTitle}': {error}"));
+                        break;
+                    }
+
+                    result.TotalRows += topicImport.TotalRows;
+                    result.ProcessedRows += topicImport.ProcessedRows;
+                    result.CreatedQuestions += topicImport.CreatedQuestions;
+                    result.ReusedQuestions += topicImport.ReusedQuestions;
+                    result.LinkedToTopic += topicImport.LinkedToTopic;
+                    result.AlreadyLinked += topicImport.AlreadyLinked;
+                    result.SkippedRows += topicImport.SkippedRows;
+
+                    result.Topics.Add(new WorkbookTopicImportResultDto
+                    {
+                        TopicId = topic.Id,
+                        TopicCode = topic.Code,
+                        TopicTitle = topic.Title,
+                        TopicCreated = topicCreated,
+                        TotalRows = topicImport.TotalRows,
+                        ProcessedRows = topicImport.ProcessedRows,
+                        CreatedQuestions = topicImport.CreatedQuestions,
+                        ReusedQuestions = topicImport.ReusedQuestions,
+                        LinkedToTopic = topicImport.LinkedToTopic,
+                        AlreadyLinked = topicImport.AlreadyLinked,
+                        SkippedRows = topicImport.SkippedRows,
+                        Errors = topicImport.Errors
+                    });
                 }
 
-                result.TotalRows += topicImport.TotalRows;
-                result.ProcessedRows += topicImport.ProcessedRows;
-                result.CreatedQuestions += topicImport.CreatedQuestions;
-                result.ReusedQuestions += topicImport.ReusedQuestions;
-                result.LinkedToTopic += topicImport.LinkedToTopic;
-                result.AlreadyLinked += topicImport.AlreadyLinked;
-                result.SkippedRows += topicImport.SkippedRows;
-
-                result.Topics.Add(new WorkbookTopicImportResultDto
+                if (importErrors.Count > 0)
                 {
-                    TopicId = topic.Id,
-                    TopicCode = topic.Code,
-                    TopicTitle = topic.Title,
-                    TopicCreated = topicCreated,
-                    TotalRows = topicImport.TotalRows,
-                    ProcessedRows = topicImport.ProcessedRows,
-                    CreatedQuestions = topicImport.CreatedQuestions,
-                    ReusedQuestions = topicImport.ReusedQuestions,
-                    LinkedToTopic = topicImport.LinkedToTopic,
-                    AlreadyLinked = topicImport.AlreadyLinked,
-                    SkippedRows = topicImport.SkippedRows,
-                    Errors = topicImport.Errors
-                });
-            }
+                    await transaction.RollbackAsync();
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Workbook import failed. No data was saved.",
+                        errors = importErrors
+                    });
+                }
 
-            if (importErrors.Count > 0)
-            {
-                await transaction.RollbackAsync();
-                return BadRequest(new
-                {
-                    success = false,
-                    message = "Workbook import failed. No data was saved.",
-                    errors = importErrors
-                });
-            }
+                await transaction.CommitAsync();
 
-            await transaction.CommitAsync();
-
-            return Ok(new { success = true, data = result });
+                return Ok(new { success = true, data = result });
+            });
         }
         catch (Exception ex)
         {

@@ -1,0 +1,12 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^powershell -NoProfile -Command \"& 'C:\\\\Users\\\\Mithun\\.S\\\\\\.swa\\\\deploy\\\\689a6c1fe8fc32f40348cc41223a7e9d83dd43d2\\\\StaticSitesClient\\.exe' upload --help\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^powershell -NoProfile -Command \"& 'C:\\\\Users\\\\Mithun\\.S\\\\\\.swa\\\\deploy\\\\689a6c1fe8fc32f40348cc41223a7e9d83dd43d2\\\\StaticSitesClient\\.exe' upload --verbose --workdir 'C:\\\\AthulB\\\\TrueAltitude\\\\TrueAltitueWebClient' --appArtifactLocation 'C:\\\\AthulB\\\\TrueAltitude\\\\TrueAltitueWebClient\\\\dist\\\\true-altitue-web-client' --configFileLocation 'C:\\\\AthulB\\\\TrueAltitude\\\\TrueAltitueWebClient\\\\public\\\\staticwebapp\\.config\\.json' --apiToken 'd766ea634d5859d441d0622c863c938c37bec8417dc7bf73af1eb283849bcda707-a1b4a13a-2eb7-4ea5-88a4-71017f9da22b000083004c95f000' --deploymentProvider 'SwaCli' --skipApiBuild true --skipAppBuild true\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

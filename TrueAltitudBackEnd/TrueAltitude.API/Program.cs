@@ -46,6 +46,11 @@ builder.Services.AddDbContext<TrueAltitudeDbContext>(options =>
         mySqlOptions =>
         {
             mySqlOptions.CommandTimeout(dbCommandTimeoutSeconds);
+            mySqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 3,
+                maxRetryDelay: TimeSpan.FromSeconds(2),
+                errorNumbersToAdd: new[] { 1205, 1213 }
+            );
         })
 );
 

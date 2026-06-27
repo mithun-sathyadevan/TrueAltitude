@@ -4,6 +4,11 @@ import { Router } from '@angular/router';
 import { TopicNode, TopicQuestion, TopicQuestionOption } from '../../models/learning.models';
 import { SubscriptionAccessService } from '../../services/subscription-access.service';
 
+export interface TopicQuizCompletionEvent {
+  topicId: string;
+  scorePercent: number;
+}
+
 @Component({
   selector: 'app-topic-quiz',
   standalone: true,
@@ -18,6 +23,7 @@ export class TopicQuizComponent {
   @Input() hasNextTopic = false;
   @Input() nextTopicTitle: string | null = null;
   @Output() nextTopicRequested = new EventEmitter<void>();
+  @Output() quizCompleted = new EventEmitter<TopicQuizCompletionEvent>();
 
   protected selectedAnswers: Record<string, string> = {};
   protected revealedAnswers: Record<string, boolean> = {};
@@ -97,6 +103,13 @@ export class TopicQuizComponent {
     this.isFinished = true;
     this.showScorePopup = true;
     this.celebrationParticles = this.getCelebrationParticles();
+
+    if (this.topic?.id) {
+      this.quizCompleted.emit({
+        topicId: this.topic.id,
+        scorePercent: this.getScorePercentage(),
+      });
+    }
   }
 
   protected onRetakeQuiz(): void {

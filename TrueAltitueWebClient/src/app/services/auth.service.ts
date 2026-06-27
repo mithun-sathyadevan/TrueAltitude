@@ -165,11 +165,24 @@ export class AuthService {
       }
 
       return { success: false, message: response?.message || 'Google login failed.' };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Google login failed:', error);
+
+      const backendMessage = error?.error?.message || error?.error?.Message;
+      if (backendMessage) {
+        return { success: false, message: backendMessage };
+      }
+
+      if (error?.status === 0) {
+        return {
+          success: false,
+          message: 'Cannot reach backend API. Ensure backend is running and apiBaseUrl/origin is correct.',
+        };
+      }
+
       return {
         success: false,
-        message: 'Google authentication failed. Verify backend is running and CORS/origin is configured.',
+        message: `Google authentication failed (HTTP ${error?.status || 'unknown'}).`,
       };
     }
   }

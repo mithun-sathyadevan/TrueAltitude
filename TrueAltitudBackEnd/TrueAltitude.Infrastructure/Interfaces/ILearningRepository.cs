@@ -19,6 +19,11 @@ public interface ILearningRepository
     Task<List<LearningQuestion>> GetRandomQuestionsBySubjectCodesAsync(List<string> subjectCodes, int count);
     Task<LearningQuestion?> GetQuestionByIdWithOptionsAsync(int questionId);
     Task<List<LearningQuestion>> GetAllQuestionsAsync();
+    Task<int> GetTrackableTopicCountAsync();
+    Task<int> GetCompletedTopicCountAsync(int userId);
+    Task<List<string>> GetCompletedTopicCodesAsync(int userId);
+    Task MarkTopicCompletedAsync(int userId, int topicId, DateTime completedAtUtc, int? scorePercent);
+    Task<List<TopicProgressMetric>> GetTopicProgressMetricsAsync(int userId, string? subjectCode = null);
 
     // Create operations
     Task<LearningSubject> CreateSubjectAsync(LearningSubject subject);
@@ -43,4 +48,13 @@ public interface ILearningRepository
     Task<bool> DeleteQuestionAsync(int questionId);
     Task<bool> DeleteQuestionOptionsAsync(int questionId);
     Task<bool> DeleteTopicQuestionAsync(int topicId, int questionId);
+}
+
+public class TopicProgressMetric
+{
+    public string TopicCode { get; set; } = string.Empty;
+    public string TopicTitle { get; set; } = string.Empty;
+    public int AttemptCount { get; set; }
+    public int BestPercent { get; set; }
+    public int LastPercent { get; set; }
 }

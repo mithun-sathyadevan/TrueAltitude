@@ -32,21 +32,6 @@
               </div>
               <span>{{ subject.description }}</span>
             </div>
-
-            <div class="subject-progress" aria-label="Subject completion progress">
-              <span class="subject-progress__percent">{{ getSubjectCompletionPercent(subject) }}%</span>
-              <div class="subject-progress__track" aria-hidden="true">
-                <div class="subject-progress__fill" [style.width.%]="getSubjectCompletionPercent(subject)"></div>
-              </div>
-              <span
-                class="status-pill"
-                [class.completed]="getSubjectCompletion(subject).state === 'Completed'"
-                [class.in-progress]="getSubjectCompletion(subject).state === 'In Progress'"
-                [class.not-started]="getSubjectCompletion(subject).state === 'Not Started'"
-              >
-                {{ getSubjectCompletion(subject).state }}
-              </span>
-            </div>
           </a>
         } @else {
           <button type="button" class="subject-row locked" (click)="onPremiumSubjectClick(subject)">
@@ -56,21 +41,6 @@
                 <span class="subscription-badge">{{ subject.subscriptionLabel || 'Premium Access' }}</span>
               </div>
               <span>{{ subject.description }}</span>
-            </div>
-
-            <div class="subject-progress" aria-label="Subject completion progress">
-              <span class="subject-progress__percent">{{ getSubjectCompletionPercent(subject) }}%</span>
-              <div class="subject-progress__track" aria-hidden="true">
-                <div class="subject-progress__fill" [style.width.%]="getSubjectCompletionPercent(subject)"></div>
-              </div>
-              <span
-                class="status-pill"
-                [class.completed]="getSubjectCompletion(subject).state === 'Completed'"
-                [class.in-progress]="getSubjectCompletion(subject).state === 'In Progress'"
-                [class.not-started]="getSubjectCompletion(subject).state === 'Not Started'"
-              >
-                {{ getSubjectCompletion(subject).state }}
-              </span>
             </div>
           </button>
         }

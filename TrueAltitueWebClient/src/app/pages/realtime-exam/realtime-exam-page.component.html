@@ -1,7 +1,7 @@
 <div class="exam-page">
   <section class="surface-card exam-header">
     <h2 class="section-title">Real-Time Exam Quiz</h2>
-    <p class="muted">Select subjects, answer 10 randomly selected questions, and review your score after submit. 60-minute timer with auto-submit.</p>
+    <p class="muted">{{ examDescription() }}</p>
 
     @if (!hasPremiumAccess()) {
       <div class="premium-lock">
@@ -34,9 +34,10 @@
             @for (subject of availableSubjects; track subject.id) {
               <label class="checkbox-label">
                 <input
-                  type="checkbox"
-                  [checked]="selectedSubjectCodes.has(subject.id)"
-                  (change)="toggleSubject(subject.id)"
+                  type="radio"
+                  name="examSubject"
+                  [checked]="isSubjectSelected(subject.id)"
+                  (change)="selectSubject(subject.id)"
                 />
                 <span>{{ subject.title }}</span>
                 <em class="muted">{{ subject.description }}</em>
@@ -44,13 +45,8 @@
             }
           </div>
 
-          <div class="selector-actions">
-            <button type="button" class="ghost-btn" (click)="selectAllSubjects()">Select All</button>
-            <button type="button" class="ghost-btn" (click)="clearAllSubjects()">Clear All</button>
-          </div>
-
           <div class="selected-info">
-            <p class="muted">Selected: {{ selectedSubjectCodes.size }} / {{ availableSubjects.length }} subjects</p>
+            <p class="muted">Selected: {{ selectedSubjectCode ? 1 : 0 }} / 1 subject</p>
           </div>
 
           <div class="selector-footer">
@@ -61,7 +57,7 @@
               type="button"
               class="primary-btn"
               (click)="startExam()"
-              [disabled]="loadingQuestions || selectedSubjectCodes.size === 0"
+              [disabled]="loadingQuestions || !selectedSubjectCode"
             >
               @if (loadingQuestions) {
                 <span>Loading Questions...</span>
@@ -155,7 +151,7 @@
       <p [class.pass-text]="hasPassed()" [class.fail-text]="!hasPassed()">
         {{ hasPassed() ? 'Result: PASS' : 'Result: FAIL' }}
       </p>
-      <p class="muted">Test duration: 60 minutes | Questions: {{ questions.length }} | Your answers: {{ answeredCount() }}</p>
+      <p class="muted">Test duration: {{ configuredDurationMinutes }} minutes | Questions: {{ questions.length }} | Your answers: {{ answeredCount() }}</p>
 
       <div class="summary-explanations">
         <h4>Answer Review</h4>

@@ -134,13 +134,12 @@ public class AuthService : IAuthService
         user.OtpCode = null;
         user.OtpExpiresAt = null;
         user.LastLoginAt = DateTime.UtcNow;
-        await _userRepository.UpdateAsync(user);
-
-        var token = _jwtTokenService.GenerateToken(user);
         var refreshToken = GenerateRefreshToken();
         user.RefreshToken = refreshToken;
         user.RefreshTokenExpiresAt = DateTime.UtcNow.AddMinutes(_refreshTokenExpiryMinutes);
         await _userRepository.UpdateAsync(user);
+
+        var token = _jwtTokenService.GenerateToken(user);
 
         return new AuthResponseDto
         {
@@ -229,62 +228,78 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponseDto> LoginWithGoogleAsync(string googleToken)
     {
-        var googlePayload = await _googleOAuthService.ValidateAndParseTokenAsync(googleToken);
-        if (googlePayload == null)
+        try
         {
-            return new AuthResponseDto { Success = false, Message = "Invalid or expired Google token." };
-        }
-
-        var user = await _userRepository.GetByEmailAsync(googlePayload.Email);
-
-        if (user == null)
-        {
-            user = new User
+            var googlePayload = await _googleOAuthService.ValidateAndParseTokenAsync(googleToken);
+            if (googlePayload == null)
             {
-                Name = googlePayload.Name,
-                Email = googlePayload.Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString()),
-                AvatarUrl = googlePayload.Picture,
-                Provider = "google",
-                IsActive = true,
-                IsEmailVerified = true, // Google accounts are pre-verified
-                CreatedAt = DateTime.UtcNow,
-                LastLoginAt = DateTime.UtcNow
-            };
-            user = await _userRepository.CreateAsync(user);
-        }
-        else
-        {
-            if (!user.IsActive)
-            {
-                return new AuthResponseDto { Success = false, Message = "Your account is deactivated. Please contact support." };
+                return new AuthResponseDto { Success = false, Message = "Invalid or expired Google token." };
             }
 
-            user.AvatarUrl = googlePayload.Picture;
-            user.Provider = "google";
-            user.IsEmailVerified = true;
-            user.LastLoginAt = DateTime.UtcNow;
-            user.RefreshToken = GenerateRefreshToken();
-            user.RefreshTokenExpiresAt = DateTime.UtcNow.AddMinutes(_refreshTokenExpiryMinutes);
-            await _userRepository.UpdateAsync(user);
-        }
+            var normalizedEmail = Truncate(googlePayload.Email?.Trim(), 255) ?? string.Empty;
+            var normalizedName = Truncate(googlePayload.Name?.Trim(), 255);
+            var normalizedAvatarUrl = Truncate(googlePayload.Picture?.Trim(), 500);
 
-        if (string.IsNullOrWhiteSpace(user.RefreshToken) || !user.RefreshTokenExpiresAt.HasValue || user.RefreshTokenExpiresAt <= DateTime.UtcNow)
-        {
-            user.RefreshToken = GenerateRefreshToken();
-            user.RefreshTokenExpiresAt = DateTime.UtcNow.AddMinutes(_refreshTokenExpiryMinutes);
-            await _userRepository.UpdateAsync(user);
-        }
+            var user = await _userRepository.GetByEmailAsync(normalizedEmail);
 
-        return new AuthResponseDto
+            var refreshToken = GenerateRefreshToken();
+            var refreshTokenExpiresAt = DateTime.UtcNow.AddMinutes(_refreshTokenExpiryMinutes);
+
+            if (user == null)
+            {
+                user = new User
+                {
+                    Name = string.IsNullOrWhiteSpace(normalizedName) ? "User" : normalizedName,
+                    Email = normalizedEmail,
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString()),
+                    AvatarUrl = normalizedAvatarUrl,
+                    Provider = "google",
+                    IsActive = true,
+                    IsEmailVerified = true, // Google accounts are pre-verified
+                    CreatedAt = DateTime.UtcNow,
+                    LastLoginAt = DateTime.UtcNow,
+                    RefreshToken = refreshToken,
+                    RefreshTokenExpiresAt = refreshTokenExpiresAt
+                };
+                user = await _userRepository.CreateAsync(user);
+            }
+            else
+            {
+                if (!user.IsActive)
+                {
+                    return new AuthResponseDto { Success = false, Message = "Your account is deactivated. Please contact support." };
+                }
+
+                user.Name = string.IsNullOrWhiteSpace(normalizedName) ? user.Name : normalizedName;
+                user.AvatarUrl = normalizedAvatarUrl;
+                user.Provider = "google";
+                user.IsEmailVerified = true;
+                user.LastLoginAt = DateTime.UtcNow;
+                user.RefreshToken = refreshToken;
+                user.RefreshTokenExpiresAt = refreshTokenExpiresAt;
+                await _userRepository.UpdateAsync(user);
+            }
+
+            return new AuthResponseDto
+            {
+                Success = true,
+                Message = "Google login successful.",
+                Token = _jwtTokenService.GenerateToken(user),
+                RefreshToken = user.RefreshToken,
+                RefreshTokenExpiresAt = user.RefreshTokenExpiresAt,
+                User = MapUserToDto(user)
+            };
+        }
+        catch (Exception ex)
         {
-            Success = true,
-            Message = "Google login successful.",
-            Token = _jwtTokenService.GenerateToken(user),
-            RefreshToken = user.RefreshToken,
-            RefreshTokenExpiresAt = user.RefreshTokenExpiresAt,
-            User = MapUserToDto(user)
-        };
+            _logger.LogError(ex, "Google login failed while creating/updating local user profile.");
+            var detail = ex.InnerException?.Message ?? ex.Message;
+            return new AuthResponseDto
+            {
+                Success = false,
+                Message = $"Google login failed while saving user profile. {detail}"
+            };
+        }
     }
 
     public async Task<AuthResponseDto> RefreshTokenAsync(RefreshTokenRequestDto dto)
@@ -353,6 +368,16 @@ public class AuthService : IAuthService
         var bytes = new byte[48];
         RandomNumberGenerator.Fill(bytes);
         return Convert.ToBase64String(bytes);
+    }
+
+    private static string? Truncate(string? value, int maxLength)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return value;
+        }
+
+        return value.Length <= maxLength ? value : value[..maxLength];
     }
 
     private static UserResponseDto MapUserToDto(User user)

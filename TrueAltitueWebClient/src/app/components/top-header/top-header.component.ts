@@ -55,7 +55,18 @@ export class TopHeaderComponent {
   }
 
   protected getDisplayAvatar(): string {
-    return this.authService.currentUser()?.avatarUrl || this.avatarUrl;
+    return this.avatarUrl;
+  }
+
+  protected onAvatarError(event: Event): void {
+    const image = event.target as HTMLImageElement | null;
+    if (!image) {
+      return;
+    }
+
+    // Prevent loop if fallback asset is also unavailable.
+    image.onerror = null;
+    image.src = this.avatarUrl;
   }
 
   protected toggleProfileMenu(): void {

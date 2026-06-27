@@ -3,7 +3,16 @@ import { Injectable } from '@angular/core';
 import { firstValueFrom, timeout } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-import { ExamEvaluationResponse, ExamQuestion, TopicNode, TopicQuestion } from '../models/learning.models';
+import {
+  ExamConfig,
+  ExamEvaluationResponse,
+  ExamQuestion,
+  TopicCompletionPayload,
+  TopicNode,
+  TopicPerformanceInsight,
+  TopicProgressSummary,
+  TopicQuestion,
+} from '../models/learning.models';
 
 @Injectable({ providedIn: 'root' })
 export class LearningDataService {
@@ -55,7 +64,7 @@ export class LearningDataService {
           ...question,
           explanation: question.explanation || rawQuestion.explanationText || '',
           answerImageUrl: question.answerImageUrl || rawQuestion.answerImageURL || '',
-          options: question.options || [],
+          options: this.shuffleArray(question.options || []),
         };
       });
     } catch (err) {
@@ -79,17 +88,20 @@ export class LearningDataService {
 
   async getExamQuestions(subjectCodes: string[]): Promise<ExamQuestion[] | undefined> {
     try {
-      console.log('[LearningDataService] getExamQuestions - requesting:', { subjectCodes, count: 10 });
+      console.log('[LearningDataService] getExamQuestions - requesting:', { subjectCodes });
       const result = await firstValueFrom(
         this.http
           .post<ExamQuestion[]>(
             `${this.apiUrl}/exam/questions`,
-            { subjectCodes, count: 10 },
+            { subjectCodes },
           )
           .pipe(timeout(this.requestTimeoutMs)),
       );
       console.log('[LearningDataService] getExamQuestions - response:', result);
-      return result;
+      return (result || []).map((question) => ({
+        ...question,
+        options: this.shuffleArray(question.options || []),
+      }));
     } catch (err) {
       if (err instanceof HttpErrorResponse && err.status === 403) {
         throw new Error('EXAM_PREMIUM_FORBIDDEN');
@@ -98,6 +110,103 @@ export class LearningDataService {
       console.error('[LearningDataService] getExamQuestions failed:', err);
       return undefined;
     }
+  }
+
+  async getExamConfig(): Promise<ExamConfig | undefined> {
+    try {
+      return await firstValueFrom(
+        this.http
+          .get<ExamConfig>(`${this.apiUrl}/exam/config`)
+          .pipe(timeout(this.requestTimeoutMs)),
+      );
+    } catch (err) {
+      console.error('[LearningDataService] getExamConfig failed:', err);
+      return undefined;
+    }
+  }
+
+  async getTopicProgressSummary(): Promise<TopicProgressSummary | undefined> {
+    try {
+      const cacheBust = Date.now();
+      return await firstValueFrom(
+        this.http
+          .get<TopicProgressSummary>(`${this.apiUrl}/progress/summary?t=${cacheBust}`)
+          .pipe(timeout(this.requestTimeoutMs)),
+      );
+    } catch (err) {
+      console.error('[LearningDataService] getTopicProgressSummary failed:', err);
+      return undefined;
+    }
+  }
+
+  async getTopicPerformanceInsight(subjectCode?: string): Promise<TopicPerformanceInsight | undefined> {
+    try {
+      const cacheBust = Date.now();
+      const normalizedSubjectCode = (subjectCode || '').trim();
+      const subjectParam = normalizedSubjectCode ? `&subjectCode=${encodeURIComponent(normalizedSubjectCode)}` : '';
+      return await firstValueFrom(
+        this.http
+          .get<TopicPerformanceInsight>(`${this.apiUrl}/progress/insights?t=${cacheBust}${subjectParam}`)
+          .pipe(timeout(this.requestTimeoutMs)),
+      );
+    } catch (err) {
+      console.error('[LearningDataService] getTopicPerformanceInsight failed:', err);
+      return undefined;
+    }
+  }
+
+  async getCompletedTopicCodes(): Promise<string[] | undefined> {
+    try {
+      const cacheBust = Date.now();
+      return await firstValueFrom(
+        this.http
+          .get<string[]>(`${this.apiUrl}/progress/topics/completed?t=${cacheBust}`)
+          .pipe(timeout(this.requestTimeoutMs)),
+      );
+    } catch (err) {
+      console.error('[LearningDataService] getCompletedTopicCodes failed:', err);
+      return undefined;
+    }
+  }
+
+  async markTopicCompleted(topicId: string, scorePercent?: number): Promise<boolean> {
+    const normalizedTopicId = (topicId || '').trim();
+    if (!normalizedTopicId) {
+      return false;
+    }
+
+    const payload: TopicCompletionPayload = {
+      topicCode: normalizedTopicId,
+    };
+
+    if (typeof scorePercent === 'number' && Number.isFinite(scorePercent)) {
+      payload.scorePercent = Math.max(0, Math.min(100, Math.round(scorePercent)));
+    }
+
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= this.maxRequestAttempts; attempt++) {
+      try {
+        await firstValueFrom(
+          this.http
+            .post(`${this.apiUrl}/progress/topics/complete`, payload)
+            .pipe(timeout(this.requestTimeoutMs)),
+        );
+
+        return true;
+      } catch (err) {
+        lastError = err;
+        const canRetry = attempt < this.maxRequestAttempts && this.isRetryable(err);
+        if (!canRetry) {
+          break;
+        }
+
+        await this.delay(this.requestRetryDelayMs);
+      }
+    }
+
+    console.error('[LearningDataService] markTopicCompleted failed:', lastError);
+    return false;
   }
 
   async evaluateExamAnswers(
@@ -182,7 +291,7 @@ export class LearningDataService {
           ...question,
           explanation: question.explanation || rawQuestion.explanationText || '',
           answerImageUrl: question.answerImageUrl || rawQuestion.answerImageURL || '',
-          options: question.options || [],
+          options: this.shuffleArray(question.options || []),
         };
       }),
       videos: topic.videos || [],
@@ -192,5 +301,16 @@ export class LearningDataService {
 
   private deepClone<T>(value: T): T {
     return JSON.parse(JSON.stringify(value)) as T;
+  }
+
+  private shuffleArray<T>(items: T[]): T[] {
+    const copy = [...items];
+
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+
+    return copy;
   }
 }

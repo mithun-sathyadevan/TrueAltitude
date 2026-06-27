@@ -85,21 +85,38 @@
               </button>
             </div>
 
-            @if ((hasFinishedQuiz() || isAnswerRevealed(question.id)) && getSelectedOption(question); as selectedOption) {
-              <div class="result" [class.pass]="selectedOption.isCorrect" [class.fail]="!selectedOption.isCorrect">
-                <strong>{{ selectedOption.isCorrect ? 'Pass' : 'Fail' }}</strong>
-                @if (!selectedOption.isCorrect && getCorrectAnswerText(question)) {
-                  <p><strong>Correct answer:</strong> {{ getCorrectAnswerText(question) }}</p>
-                }
-                @if (getQuestionReviewText(question)) {
-                  <p>{{ getQuestionReviewText(question) }}</p>
-                }
-                @if (question.answerImageUrl) {
-                  <div class="answer-media">
-                    <img [src]="question.answerImageUrl" alt="Answer reference" loading="lazy" decoding="async" />
-                  </div>
-                }
-              </div>
+            @if (hasFinishedQuiz() || isAnswerRevealed(question.id)) {
+              @if (getSelectedOption(question); as selectedOption) {
+                <div class="result" [class.pass]="selectedOption.isCorrect" [class.fail]="!selectedOption.isCorrect">
+                  <strong>{{ selectedOption.isCorrect ? 'Pass' : 'Fail' }}</strong>
+                  @if (!selectedOption.isCorrect && getCorrectAnswerText(question)) {
+                    <p><strong>Correct answer:</strong> {{ getCorrectAnswerText(question) }}</p>
+                  }
+                  @if (getQuestionReviewText(question)) {
+                    <p>{{ getQuestionReviewText(question) }}</p>
+                  }
+                  @if (question.answerImageUrl) {
+                    <div class="answer-media">
+                      <img [src]="question.answerImageUrl" alt="Answer reference" loading="lazy" decoding="async" />
+                    </div>
+                  }
+                </div>
+              } @else {
+                <div class="result fail">
+                  <strong>Not Answered</strong>
+                  @if (getCorrectAnswerText(question)) {
+                    <p><strong>Correct answer:</strong> {{ getCorrectAnswerText(question) }}</p>
+                  }
+                  @if (getQuestionReviewText(question)) {
+                    <p>{{ getQuestionReviewText(question) }}</p>
+                  }
+                  @if (question.answerImageUrl) {
+                    <div class="answer-media">
+                      <img [src]="question.answerImageUrl" alt="Answer reference" loading="lazy" decoding="async" />
+                    </div>
+                  }
+                </div>
+              }
             }
           }
         </article>

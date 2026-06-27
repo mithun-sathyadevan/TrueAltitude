@@ -3,11 +3,12 @@ import { ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { ChapterBlogsComponent } from '../../components/chapter-blogs/chapter-blogs.component';
-import { TopicQuizComponent } from '../../components/topic-quiz/topic-quiz.component';
+import { TopicQuizComponent, TopicQuizCompletionEvent } from '../../components/topic-quiz/topic-quiz.component';
 import { TopicTreeComponent } from '../../components/topic-tree/topic-tree.component';
 import { VideoCourseComponent } from '../../components/video-course/video-course.component';
 import { TopicNode } from '../../models/learning.models';
 import { LearningDataService } from '../../services/learning-data.service';
+import { ProgressRefreshService } from '../../services/progress-refresh.service';
 import { SubscriptionAccessService } from '../../services/subscription-access.service';
 import { environment } from '../../../environments/environment';
 
@@ -21,10 +22,12 @@ import { environment } from '../../../environments/environment';
 export class LearningPageComponent implements OnDestroy {
   protected selectedSubject: TopicNode | null = null;
   protected selectedTopic: TopicNode | null = null;
+  protected completedTopicIds: string[] = [];
   protected isTopicPickerOpen = false;
   protected loading = true;
   protected loadingTopicQuestions = false;
   protected topicQuestionLoadError = '';
+  protected topicProgressSaveError = '';
   protected loadError = '';
   protected readonly showLearningResources = environment.features.showLearningVideoCourse || environment.features.showLearningChapterBlogs;
   protected readonly showLearningVideoCourse = environment.features.showLearningVideoCourse;
@@ -34,6 +37,7 @@ export class LearningPageComponent implements OnDestroy {
     private readonly activatedRoute: ActivatedRoute,
     private readonly router: Router,
     private readonly learningDataService: LearningDataService,
+    private readonly progressRefreshService: ProgressRefreshService,
     private readonly subscriptionAccessService: SubscriptionAccessService,
     private readonly cdr: ChangeDetectorRef,
   ) {
@@ -64,6 +68,7 @@ export class LearningPageComponent implements OnDestroy {
       }
 
       this.selectedSubject = subject;
+      this.completedTopicIds = await this.getCompletedTopicIds();
       this.selectedTopic = this.getInitialTopic(subject);
       this.topicQuestionLoadError = '';
 
@@ -149,6 +154,22 @@ export class LearningPageComponent implements OnDestroy {
     this.scrollToTopicTop();
   }
 
+  protected async onTopicQuizCompleted(event: TopicQuizCompletionEvent): Promise<void> {
+    const topicId = event.topicId;
+    this.topicProgressSaveError = '';
+    const saved = await this.learningDataService.markTopicCompleted(topicId, event.scorePercent);
+    if (!saved) {
+      this.topicProgressSaveError = 'Progress could not be saved. Please click Finish Quiz again.';
+    } else {
+      if (!this.completedTopicIds.includes(topicId)) {
+        this.completedTopicIds = [...this.completedTopicIds, topicId];
+      }
+      this.progressRefreshService.notifyProgressUpdated();
+    }
+
+    this.cdr.detectChanges();
+  }
+
   protected openTopicPicker(): void {
     this.isTopicPickerOpen = true;
     document.body.style.overflow = 'hidden';
@@ -161,6 +182,11 @@ export class LearningPageComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     document.body.style.overflow = '';
+  }
+
+  private async getCompletedTopicIds(): Promise<string[]> {
+    const completedTopicIds = await this.learningDataService.getCompletedTopicCodes();
+    return Array.isArray(completedTopicIds) ? completedTopicIds : [];
   }
 
   private async ensureTopicQuestionsLoaded(topic: TopicNode): Promise<void> {

@@ -11,6 +11,13 @@
         (click)="onTopicSelected(topic)"
       >
         <span class="topic-title-row">
+          @if (isTopicTrackable(topic)) {
+            <span class="topic-complete-box" [class.completed]="isTopicCompleted(topic)" aria-hidden="true">
+              @if (isTopicCompleted(topic)) {
+                <i class="fas fa-check"></i>
+              }
+            </span>
+          }
           <span class="topic-title">{{ topic.title }}</span>
           @if (topic.requiresSubscription && !hasPremiumAccess) {
             <span class="topic-badge">{{ topic.subscriptionLabel || 'Premium Access' }}</span>
@@ -31,6 +38,7 @@
           [topics]="topic.children || []"
           [depth]="depth + 1"
           [selectedTopicId]="selectedTopicId"
+          [completedTopicIds]="completedTopicIds"
           [hasPremiumAccess]="hasPremiumAccess"
           (topicSelected)="onTopicSelected($event)"
         ></app-topic-tree>

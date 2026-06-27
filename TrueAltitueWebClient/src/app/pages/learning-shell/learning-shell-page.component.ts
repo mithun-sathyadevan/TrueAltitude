@@ -21,6 +21,7 @@ interface LearningModuleNavItem {
 export class LearningShellPageComponent {
   protected isModulePopupOpen = false;
   protected isSubjectsRoute = false;
+  protected readonly timedExamModeEnabled = true;
 
   protected readonly modules: LearningModuleNavItem[] = [
     {
@@ -33,6 +34,12 @@ export class LearningShellPageComponent {
       label: 'Real-Time Exam Quiz',
       description: 'Timed exam simulation with pass/fail insights and explanations.',
       route: '/learning/realtime-exam',
+      available: this.timedExamModeEnabled,
+    },
+    {
+      label: 'Performance Insights',
+      description: 'Score trends, strong topics, and improvement guidance based on your quizzes.',
+      route: '/learning/performance-insights',
       available: true,
     },
     {

@@ -241,6 +241,8 @@ header {
 
   .theme-btn {
     padding: 7px 10px;
+    min-width: 38px;
+    justify-content: center;
   }
 
   .theme-btn span {
@@ -296,6 +298,16 @@ header {
   .login-btn {
     padding: 6px 10px;
     font-size: 0.78rem;
+  }
+
+  .theme-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    padding: 0;
+    border-radius: 50%;
+    gap: 0;
+    justify-content: center;
   }
 
   .user-profile {

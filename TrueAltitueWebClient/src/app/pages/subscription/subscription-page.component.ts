@@ -25,7 +25,7 @@ export class SubscriptionPageComponent implements OnInit {
   readonly busyPlanCode = signal('');
   readonly message = signal('');
   readonly error = signal('');
-  protected readonly paymentsEnabled = false;
+  protected readonly paymentsEnabled = true;
 
   constructor(
     private readonly subscriptionService: SubscriptionService,

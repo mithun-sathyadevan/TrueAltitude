@@ -188,10 +188,6 @@
   box-shadow: 0 14px 28px rgba(18, 62, 93, 0.32);
 }
 
-.launch-btn:active {
-  transform: translateY(0);
-}
-
 .launch-btn--primary {
   background: linear-gradient(130deg, var(--brand-600), var(--teal-600));
   color: #ffffff;
@@ -223,22 +219,6 @@
   font-weight: 700;
   color: #204163;
   animation: fade-in-up 0.6s ease both;
-}
-
-.quick-points span:nth-child(1) {
-  animation-delay: 0.1s;
-}
-
-.quick-points span:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.quick-points span:nth-child(3) {
-  animation-delay: 0.3s;
-}
-
-.quick-points i {
-  color: var(--brand-500);
 }
 
 .mission-side {

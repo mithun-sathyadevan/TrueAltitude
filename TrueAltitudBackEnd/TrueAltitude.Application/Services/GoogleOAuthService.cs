@@ -1,5 +1,4 @@
 using System.IdentityModel.Tokens.Jwt;
-using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -23,7 +22,6 @@ public class GoogleTokenPayload
 
 public class GoogleOAuthService : IGoogleOAuthService
 {
-    private readonly IConfiguration _configuration;
     private readonly ILogger<GoogleOAuthService> _logger;
     private readonly string _googleClientId;
 
@@ -31,9 +29,8 @@ public class GoogleOAuthService : IGoogleOAuthService
         IConfiguration configuration,
         ILogger<GoogleOAuthService> logger)
     {
-        _configuration = configuration;
         _logger = logger;
-        _googleClientId = configuration["GoogleOAuth:ClientId"] ?? string.Empty;
+        _googleClientId = configuration["GoogleOAuth:ClientId"]?.Trim() ?? string.Empty;
     }
 
     /// <summary>
@@ -62,10 +59,27 @@ public class GoogleOAuthService : IGoogleOAuthService
                 return null;
             }
 
-            // Validate audience (should be our Client ID)
-            if (!jwtToken.Audiences.Contains(_googleClientId))
+            // Validate audience against the environment-specific Google client id.
+            if (string.IsNullOrWhiteSpace(_googleClientId))
             {
-                _logger.LogWarning($"Token not for our Client ID. Expected: {_googleClientId}, Got: {string.Join(",", jwtToken.Audiences)}");
+                _logger.LogWarning("GoogleOAuth:ClientId is not configured.");
+                return null;
+            }
+
+            var tokenAudiences = jwtToken.Audiences?.ToList() ?? new List<string>();
+            var azp = jwtToken.Claims.FirstOrDefault(c => c.Type == "azp")?.Value;
+            if (!string.IsNullOrWhiteSpace(azp))
+            {
+                tokenAudiences.Add(azp);
+            }
+
+            var hasConfiguredAudience = tokenAudiences.Any(aud => string.Equals(aud, _googleClientId, StringComparison.OrdinalIgnoreCase));
+            if (!hasConfiguredAudience)
+            {
+                _logger.LogWarning(
+                    "Token audience mismatch. Expected client ID: {Expected}. Got: {Audiences}",
+                    _googleClientId,
+                    string.Join(",", tokenAudiences));
                 return null;
             }
 

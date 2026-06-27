@@ -41,6 +41,7 @@
           [topics]="selectedSubject.children || []"
           [hasPremiumAccess]="hasPremiumAccess()"
           [selectedTopicId]="selectedTopic?.id || null"
+          [completedTopicIds]="completedTopicIds"
           (topicSelected)="onTopicSelected($event)"
         ></app-topic-tree>
       </aside>
@@ -88,6 +89,12 @@
               </div>
             </section>
           } @else {
+            @if (topicProgressSaveError) {
+              <section class="surface-card">
+                <p class="muted">{{ topicProgressSaveError }}</p>
+              </section>
+            }
+
             <app-topic-quiz
               [topic]="selectedTopic"
               [loadingQuestions]="loadingTopicQuestions"
@@ -96,6 +103,7 @@
               [hasNextTopic]="!!getNextTopicForSelected()"
               [nextTopicTitle]="getNextTopicForSelected()?.title || null"
               (nextTopicRequested)="goToNextTopic()"
+              (quizCompleted)="onTopicQuizCompleted($event)"
             ></app-topic-quiz>
           }
         } @else {
